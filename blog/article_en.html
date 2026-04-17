@@ -18,7 +18,7 @@
 <hr />
 <h2>1. When did "dry = good sake" really take hold?</h2>
 <p>To look at the long span, I first checked the frequency of the words <em>karakuchi</em> (dry), <em>amakuchi</em> (sweet), <em>tanrei</em> (light/crisp), <em>hojun</em> (rich), <em>ginjo</em>, and <em>junmai</em> using the National Diet Library's <strong>NDL Ngram Viewer</strong>. One caveat: this data is not limited to sake — it reflects word frequency across all publications. So this is not strictly a "history of sake" but rather a supplementary line for seeing how the era's language was changing.</p>
-<p><img alt="Frequency of taste-related words in Japanese publications (1880–2000). Source: NDL Ngram Viewer." src="https://raw.githubusercontent.com/s00048ri/saketimes-analysis/main/blog/medium/fig1_ndl.png" />
+<p><img alt="Frequency of taste-related words in Japanese publications (1880–2000). Source: NDL Ngram Viewer." src="https://s00048ri.github.io/saketimes-analysis/blog/medium/fig1_ndl.png" />
 <em>Figure 1: Frequency of taste-related words in Japanese publications (1880–2000). Source: NDL Ngram Viewer.</em></p>
 <p>In this long-term data, "sweet" (<em>amakuchi</em>) was by far the most used word during the Meiji era (1880s). As often pointed out in the literature, sake discourse in the Edo period was originally centered on "sweet." That tendency may be reflected here.</p>
 <p>"Sweet" then slowly declined over the following century, while "dry" (<em>karakuchi</em>) rose sharply from the 1970s onward. Since <em>tanrei</em> (light/crisp), a term specifically tied to sake, was rising at the same time, it's natural to read this — at least at the level of discourse — as the "<em>tanrei karakuchi</em>" (light and dry) boom taking firm hold during this period.</p>
@@ -29,7 +29,7 @@
 <p>Next, let's turn to all 5,386 brands and about 370,000 reviews from SAKETIME. What we can grasp here is not "the entire market" but the preferences of the review-writing enthusiast community. Even so, it's a powerful vantage point for seeing what's highly valued right now.</p>
 <h3>Structured data: higher rank, sweeter and lighter</h3>
 <p>On SAKETIME, users register "sweet/dry" (5 levels from dry +2 to sweet +2) and "body" (5 levels from light +2 to heavy +2) along with their reviews. When aggregated by ranking tier, the profile of top brands became quite clear.</p>
-<p><img alt="Sweet vs Dry rate by ranking tier" src="https://raw.githubusercontent.com/s00048ri/saketimes-analysis/main/blog/medium/fig2_sweet_dry.png" />
+<p><img alt="Sweet vs Dry rate by ranking tier" src="https://s00048ri.github.io/saketimes-analysis/blog/medium/fig2_sweet_dry.png" />
 <em>Figure 2: Sweet rate and dry rate by ranking tier. Data: SAKETIME, 370K reviews.</em></p>
 <ul>
 <li><strong>Sweet rate</strong> (sweet +1 or above): 67.3% in Top 10, 30.2% in ranks 101–500, 27.6% in ranks 501+</li>
@@ -40,7 +40,7 @@
 <p>But this is not the same thing as "rich, heavy in umami." In fact, the rich rate is <em>lower</em> in higher ranks. What concentrates at the top is sake that's sweet yet not too heavy — with clean definition and drinkable over time. The YouTube video's point about "sweet" was correct, but "umami" and "juicy" need to be handled more carefully.</p>
 <h3>Review text highlights the strength of "fruity"</h3>
 <p>To check nuances that structured data alone can't capture, I also compared keyword frequencies in review text.</p>
-<p><img alt="Keyword frequency in review text by ranking tier" src="https://raw.githubusercontent.com/s00048ri/saketimes-analysis/main/blog/medium/fig3_text_keywords.png" />
+<p><img alt="Keyword frequency in review text by ranking tier" src="https://s00048ri.github.io/saketimes-analysis/blog/medium/fig3_text_keywords.png" />
 <em>Figure 3: Taste keyword frequency in review text by ranking tier.</em></p>
 <ul>
 <li><strong>Sweet-type keywords</strong>: 32.8% in Top 10, 26.8% in ranks 501+</li>
@@ -49,17 +49,17 @@
 <li><strong>Rich-type</strong>: 17.9% in Top 10, 23.2% in ranks 501+ (actually lower at the top)</li>
 </ul>
 <p>What stands out is that the higher the rank, the less "dry" is spoken of, and the more "fruity" appears. Sweet-type keywords are also slightly more common at the top, but beyond that, what characterizes the impression of top brands can be described as "elegance with a sense of fruit."</p>
-<p><img alt="Top 9 sake flavor profiles" src="https://raw.githubusercontent.com/s00048ri/saketimes-analysis/main/blog/medium/fig4_radar.png" />
+<p><img alt="Top 9 sake flavor profiles" src="https://s00048ri.github.io/saketimes-analysis/blog/medium/fig4_radar.png" />
 <em>Figure 4: Top 9 sake flavor profiles — keyword analysis of 370K reviews on SAKETIME.</em></p>
 <p>Looking at individual profiles of the Top 10, Hanaabbi's fruity rate of 37% and Hinotori / Miyakanbai's sweet rate of 44% stand out. On the other hand, Juyondai — ranked #1 — shows a dry rate of just 1.8%, with the sweet rate not especially high either: a balanced type with no extreme leanings. That is, the aesthetic of top brands is closer to "how to reconcile elegance and refinement" than "sweet is good."</p>
-<p><img alt="Taste distribution comparison by ranking tier" src="https://raw.githubusercontent.com/s00048ri/saketimes-analysis/main/blog/medium/fig5_heatmap.png" />
+<p><img alt="Taste distribution comparison by ranking tier" src="https://s00048ri.github.io/saketimes-analysis/blog/medium/fig5_heatmap.png" />
 <em>Figure 5: Taste distribution (body × sweet/dry) by ranking tier. Each cell = % of total.</em></p>
 <p>When you overlay the distribution of sweet/dry and body, top brands cluster in "normal body × sweet-leaning." What emerges is not a victory of "heavy and rich" but the advantage of sake that is "moderately light, with lifted aroma, where the sweetness shows cleanly."</p>
 <hr />
 <h2>3. But it can't be said that everything is going sweet</h2>
 <p>So, is the community as a whole going all-in on sweet? Looking at the 2017–2025 time series, the picture is a bit more complex.</p>
 <h3>In structured data, sweet is settling in but not running away with it</h3>
-<p><img alt="Time series of taste tendencies" src="https://raw.githubusercontent.com/s00048ri/saketimes-analysis/main/blog/medium/fig6_trend_structured.png" />
+<p><img alt="Time series of taste tendencies" src="https://s00048ri.github.io/saketimes-analysis/blog/medium/fig6_trend_structured.png" />
 <em>Figure 6: Taste trends over time — structured data, all brands.</em></p>
 <ul>
 <li>The <strong>sweet rate</strong> has maintained the highest level throughout, but has gradually declined from 42% in 2017 to 37% in 2025</li>
@@ -69,14 +69,14 @@
 </ul>
 <p>What's important here is that the observation "sweet has become mainstream" and the conclusion "dry is over" are not the same thing. Across the community as a whole, at least, while sweet has become the new orthodoxy, dry still maintains a certain presence.</p>
 <h3>In text analysis too, what's growing is "fruity" more than sweet</h3>
-<p><img alt="Keyword frequency trends over time" src="https://raw.githubusercontent.com/s00048ri/saketimes-analysis/main/blog/medium/fig7_trend_text.png" />
+<p><img alt="Keyword frequency trends over time" src="https://s00048ri.github.io/saketimes-analysis/blog/medium/fig7_trend_text.png" />
 <em>Figure 7: Taste keyword trends over time — review text analysis, all brands.</em></p>
 <p>In review text too, the clearest rise is in fruity-type expressions — from 17% in 2017 to 25% in 2025. Sweet-type words have settled in as the mainstream, so their growth has slowed; dry-type words show a bottoming-out after a temporary dip.</p>
 <p>So rather than "a full shift from dry to sweet," the more accurate description is: "sweet and fruity have become the standard language of the top, while the community as a whole is diversifying."</p>
 <hr />
 <h2>4. In the general consumer's search axis, "dry" is still strong</h2>
 <p>Finally, Google Trends. What this measures is not taste itself but "the words people use when they look for sake." So this is not a direct measurement of preference, but rather data on the strength of classification and search terms.</p>
-<p><img alt="Google Trends for sake-related search terms" src="https://raw.githubusercontent.com/s00048ri/saketimes-analysis/main/blog/medium/fig8_google_trends.png" />
+<p><img alt="Google Trends for sake-related search terms" src="https://s00048ri.github.io/saketimes-analysis/blog/medium/fig8_google_trends.png" />
 <em>Figure 8: Google Trends — sake-related search terms in Japan (2004–2025). 12-month moving average.</em></p>
 <p>In this data, "sake dry" consistently and significantly exceeds "sake sweet." Moreover, "dry" has been on a long-term upward trend from 2004 to 2025, while "sweet" has also grown gradually. In other words, in general consumer search behavior, "dry" remains an extremely strong entry-point word.</p>
 <p>Of course, search volume doesn't directly equate to the strength of preference. "Dry" is a term easily understood at the shop counter and likely functions as a safe, well-recognized selection label. Still, it's hard to say that the word "dry" is already obsolete.</p>
@@ -99,18 +99,18 @@
 <hr />
 <h2>Appendix 1: SAKETIME overview and caveats for reading the rankings</h2>
 <p>Looking at SAKETIME as a whole, the correlation between rating scores and review counts is very high (0.888 on a log scale). This isn't simply "better sake gets more reviews" — it likely includes visibility bias: "well-known sake gets rated higher," "buzzy sake stays at the top." Treating the top of the rankings as "a miniature of the overall market" isn't safe.</p>
-<p><img alt="Rating score vs review count" src="https://raw.githubusercontent.com/s00048ri/saketimes-analysis/main/blog/medium/appfig1_rating_reviews.png" />
+<p><img alt="Rating score vs review count" src="https://s00048ri.github.io/saketimes-analysis/blog/medium/appfig1_rating_reviews.png" />
 <em>Appendix Figure 1: Rating score vs. review count. Top 10 brands labeled.</em></p>
 <p>This matters when reading the central conclusions of this piece. What we're looking at here is "the taste of brands that currently attract high ratings" — not direct measurements of sales volume across the sake market or actual drinking behavior of general consumers.</p>
 <hr />
 <h2>Appendix 2: Differences in rating by classification</h2>
 <p>By specific-name classification (<em>tokutei meishoshu</em>), junmai daiginjo (4.16) and junmai ginjo (4.05) show higher average ratings, while honjozo (3.79) and futsushu (regular, 3.75) are relatively lower. This is intuitive, but the gap is only about 0.4 points — not decisive. Classification alone doesn't determine rating.</p>
-<p><img alt="Average rating by classification" src="https://raw.githubusercontent.com/s00048ri/saketimes-analysis/main/blog/medium/appfig2_specname.png" />
+<p><img alt="Average rating by classification" src="https://s00048ri.github.io/saketimes-analysis/blog/medium/appfig2_specname.png" />
 <em>Appendix Figure 2: Average rating by sake classification (tokutei meishoshu).</em></p>
 <hr />
 <h2>Appendix 3: Independent verification with Sakenowa data</h2>
 <p>To check that the main conclusions aren't driven by SAKETIME-specific biases, I cross-checked with the flavor data from Sakenowa, which offers a public API. Sakenowa is a sake community app with over one million check-in records. Its public API provides flavor charts (6-axis numerical values: floral / rich / heavy / mellow / light / dry) for about 3,100 brands, along with 141 flavor tags.</p>
-<p><img alt="Sakenowa flavor chart by ranking tier" src="https://raw.githubusercontent.com/s00048ri/saketimes-analysis/main/blog/medium/appfig3_sakenowa.png" />
+<p><img alt="Sakenowa flavor chart by ranking tier" src="https://s00048ri.github.io/saketimes-analysis/blog/medium/appfig3_sakenowa.png" />
 <em>Appendix Figure 3: Sakenowa flavor chart — 6-axis average by ranking tier. Source: Sakenowa Data Project (sakenowa.com).</em></p>
 <p>The results largely agreed. In the 6-axis flavor charts, the higher the rank, the higher "floral" (1–10: 0.50 → outside ranking: 0.35) and the lower "heavy" (1–10: 0.24 → outside: 0.35). Among flavor tags, the "dry" tag appears in 0% of top-10 brands but reaches 78% in ranks 51–100. "Fruity" is 100% in Top 10 and 33% outside the ranking.</p>
 <p>Dry and heaviness come to the fore more at the middle and lower ranks, while at the top, the direction "elegant and light, with good balance" is reproduced. At least the skeletal finding — "the higher the rank, the more fruity-leaning; not heavy and dry" — is supported by another dataset.</p>
