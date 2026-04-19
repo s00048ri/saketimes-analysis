@@ -9,3 +9,9 @@ wordcloud
 scikit-learn
 jupyter
 nbformat
+fugashi[unidic-lite]
+tomotopy
+bertopic
+sentence-transformers
+gensim
+pyarrow

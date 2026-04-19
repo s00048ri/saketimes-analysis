@@ -15,6 +15,14 @@ blog/fig*.png
 # Jupyter notebook outputs
 analysis/*_executed.ipynb
 
+# Topic model artifacts (large, regenerable from reviews.csv)
+data/processed/reviews_tokenized.parquet
+data/processed/lda_model.bin
+data/processed/dmr_model.bin
+data/processed/bertopic_model.pkl
+data/processed/lda_doc_topic.parquet
+data/processed/acidity_vocabulary.json
+
 # Python
 __pycache__/
 *.pyc
