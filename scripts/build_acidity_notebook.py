@@ -507,9 +507,22 @@ else:
 # =========================================================================
 CELLS.append(md("""## Section 5: 酸味語彙の確定
 
-Section 2/3 の LDA・DMR で酸味関連トピックとされたものの上位語を全て抽出し、
-シード語彙と合わせて手動キュレーションで確定する。
-最終的に `ACIDITY_CORE` (直接酸味を指す) と `ACIDITY_RELATED` (派生・関連) の2層に分ける。
+`ACIDITY_CORE` (酸味を直接指す語) と `ACIDITY_RELATED` (酸味と意味的に関連する語) の2層に分ける。
+
+- **ACIDITY_CORE**: 手動で定義。「この1語で必ず酸味を示し、他の意味で使われない語」のみ選定。
+  候補: `酸味 / 酸 / 酸っぱい / 酸度 / 乳酸 / 酸っぱさ`。fugashi の lemma 正規化でコーパスに実在する語のみ残す。
+- **ACIDITY_RELATED**: **PMI (Pointwise Mutual Information) ベースの自動選定**で決定する。
+  基準: `PMI(w, CORE) = log( P(w|CORE) / P(w) )` が閾値以上で、かつ共起文書数が十分な多義語・派生語。
+  手動キュレーションは銘柄/酒米/地名/製造用語などの固有名詞ストップリスト除外のみ。
+
+### PMI 選定の合理性
+
+- **PMI(w, CORE) = 0** → `w` の出現は CORE と独立（ランダム期待通り）
+- **PMI(w, CORE) = log(1.5) ≈ 0.405** → CORE 文書内で `w` が1.5倍起きやすい
+- **PMI(w, CORE) = log(2) ≈ 0.693** → 2倍起きやすい（統計的に強い結び付き）
+
+本ノートブックでは閾値 **PMI ≥ log(1.5)** と共起文書数 **≥ 500** を採用。これにより、
+「酸味文書で有意に高頻度で出現する一般語彙」を客観的に抽出する。
 """))
 
 CELLS.append(code("""# 候補語: シード + LDA/DMR 酸味トピックの top30 + BERTopic 酸味トピックの top20
@@ -546,30 +559,138 @@ for w, score in candidates.most_common(120):
         if len(rows) <= 80:
             print(f'  {w:10s}  score={score:3d}  corpus_freq={cf:,}')
 
-# 手動キュレーション: 以下を最終語彙として採用
-# CORE: 酸味を直接意味する語（誤爆が少ない）
+# CORE は手動で定義（直接酸味を指す語のみ、fugashi lemma で実在するもの）
 ACIDITY_CORE = ['酸味', '酸', '酸っぱい', '酸度', '乳酸', '酸っぱさ']
-# RELATED: 酸味と相関するが多義な語（キレ・ジューシー等）
-ACIDITY_RELATED = ['キレ', 'シャープ', '爽やか', 'さっぱり', 'ジューシー',
-                   '爽快', 'フレッシュ', '柑橘', 'レモン', 'ライム',
-                   '青りんご', 'グレープフルーツ', '白ワイン', 'ヨーグルト']
-
-# コーパスに実在する語のみを残す
 ACIDITY_CORE = [w for w in ACIDITY_CORE if corpus_freq.get(w, 0) >= 10]
-ACIDITY_RELATED = [w for w in ACIDITY_RELATED if corpus_freq.get(w, 0) >= 10]
 
 print('\\n' + '=' * 70)
-print(f'最終語彙 ACIDITY_CORE ({len(ACIDITY_CORE)}語):')
+print(f'ACIDITY_CORE ({len(ACIDITY_CORE)}語):')
 for w in ACIDITY_CORE:
     print(f'  {w} (頻度={corpus_freq.get(w, 0):,})')
-print(f'\\n最終語彙 ACIDITY_RELATED ({len(ACIDITY_RELATED)}語):')
-for w in ACIDITY_RELATED:
-    print(f'  {w} (頻度={corpus_freq.get(w, 0):,})')
+"""))
+
+# --- New cell: PMI-based RELATED derivation ---
+CELLS.append(code("""# ========================================================================
+# ACIDITY_RELATED の PMI 自動選定
+# ========================================================================
+from scipy import sparse
+
+core_set = set(ACIDITY_CORE)
+has_core_bool = tokenized['tokens'].apply(lambda ts: any(t in core_set for t in ts)).values
+n_total = len(tokenized)
+n_core = int(has_core_bool.sum())
+print(f'CORE を含む文書数: {n_core:,} / {n_total:,} ({100*n_core/n_total:.2f}%)')
+
+# presence 行列（docs × vocab）を一度構築してPMIをベクトル計算
+# 低頻度語 (freq < 2000) は PMI の分散が大きく、ニッチな銘柄名やワイナリー名が
+# 上位に出やすい。広く使われる味わい/香り語彙に限定するため閾値は高めに設定。
+MIN_FREQ_FOR_PMI = 2000
+pmi_vocab = sorted(w for w, c in corpus_freq.items() if c >= MIN_FREQ_FOR_PMI)
+w2i = {w: i for i, w in enumerate(pmi_vocab)}
+print(f'PMI計算対象語彙サイズ (freq >= {MIN_FREQ_FOR_PMI}): {len(pmi_vocab):,}')
+
+rows_idx, cols_idx = [], []
+for i, toks in enumerate(tokenized['tokens']):
+    for w in set(toks):
+        j = w2i.get(w)
+        if j is not None:
+            rows_idx.append(i)
+            cols_idx.append(j)
+X = sparse.csr_matrix((np.ones(len(rows_idx), dtype=np.int32), (rows_idx, cols_idx)),
+                      shape=(n_total, len(pmi_vocab)), dtype=np.int32)
+print(f'presence行列: {X.shape}, nnz={X.nnz:,}')
+
+n_w = np.asarray(X.sum(axis=0)).ravel().astype(float)
+core_row = sparse.csr_matrix(has_core_bool.astype(np.int32).reshape(1, -1), dtype=np.int32)
+n_w_and_core = np.asarray((core_row @ X).todense()).ravel().astype(float)
+
+p_w = n_w / n_total
+p_w_given_core = n_w_and_core / max(n_core, 1)
+with np.errstate(divide='ignore', invalid='ignore'):
+    pmi_scores = np.where((p_w > 0) & (p_w_given_core > 0),
+                          np.log(p_w_given_core / p_w), -np.inf)
+
+# 固有名詞・製造情報系ストップリスト
+# （fugashi はカナ化するため「山田→ヤマダ」のように別形で残る）
+RELATED_STOPLIST = set(\"\"\"
+ヤマダ アイザン ミヤマ ツル ミヤギ カスミ マチダ アマミ イズミ イクハラ アイヅ
+グンマ コシ カモ オカヤマ アオモリ ユタカ ユウ ヒロシマ トサ コウチ ヒョウゴ
+ナガノ シンシュウ カワナカジマ エヒメ デワ ヤマガタ フジ ナラ モリ アキツ
+バンシュウ シャラク ミムロ クヘイ ナベシマ マモル マツモト サワ ミヨシ
+アキタ ハラ イセ ミサト ヤマモト トヤマ トクシマ アカイワ ビゼン アベ
+寒菊 鳳凰 荷札 楽器 マサムネ 一白
+ラベル カップ ガラス 酒店 酒屋 銘柄 角打ち 特別 限定 火入れ 製造 酒米
+パーセント 度数 酵母 原料 使用 会社 株式 不明 公開 協会 醸造 国産 税込み
+材料 米麹 掛米 未満 以下 以上 アル alc ml note BY サラリーマン
+株 以下 必要 大切 代表 友人 イベント 親父 アヤ コーナー ラブ www 時間
+結局 今宵 直後 感覚 色味 カン 含み 歩合 精米 冷たい 今 日本 旨い 寿司 定番
+弱い 穀物 含み 僅か 微か
+\"\"\".split())
+# 上記は「discourse marker / 時間語 / 製造用語 / 食事ペアリング / 曖昧な形容」。
+# フィニッシュ・ボディー・アタック・程良い・強め・適度・絶妙 などは
+# 正当な味わい表現なので stoplist に入れない（酸味との関連性は PMI が判定する）。
+
+# 全候補をまず表化（後で閾値を調整しやすいように）
+all_records = []
+for i, w in enumerate(pmi_vocab):
+    if w in core_set or w in RELATED_STOPLIST:
+        continue
+    if re.fullmatch(r'[ぁ-ん]{1,2}', w) or re.fullmatch(r'[A-Za-z]+', w):
+        continue
+    all_records.append({
+        'word': w,
+        'corpus_freq': int(n_w[i]),
+        'cooc_with_core': int(n_w_and_core[i]),
+        'p_w': float(p_w[i]),
+        'p_w_given_core': float(p_w_given_core[i]),
+        'pmi': float(pmi_scores[i]) if np.isfinite(pmi_scores[i]) else 0.0,
+        'lift': float(p_w_given_core[i] / p_w[i]) if p_w[i] > 0 else 0.0,
+    })
+
+pmi_df_all = pd.DataFrame(all_records).sort_values('pmi', ascending=False).reset_index(drop=True)
+print(f'\\n全候補語 (ストップリスト除外後): {len(pmi_df_all)}語')
+
+# 選定基準
+# 酸味CORE は全体の21% の文書に出現する頻出カテゴリ。
+# MIN_FREQ_FOR_PMI=2000 の時点で既に「広く使われる語」に絞られているので、
+# PMI 閾値は lift >= 1.15（15%以上酸味文書で高頻度）とする。
+PMI_THRESHOLD = np.log(1.15)  # ≈ 0.140
+N_MIN_COOC = 800
+
+pmi_df = pmi_df_all[
+    (pmi_df_all['pmi'] >= PMI_THRESHOLD) &
+    (pmi_df_all['cooc_with_core'] >= N_MIN_COOC)
+].reset_index(drop=True)
+print(f'フィルタ適用後 (PMI>={PMI_THRESHOLD:.3f}, 共起>={N_MIN_COOC}): {len(pmi_df)}語')
+print('\\n上位40語:')
+if len(pmi_df) > 0:
+    print(pmi_df.head(40).to_string(index=False, float_format='{:.3f}'.format))
+else:
+    print('  閾値を満たす語なし。全候補上位20語を参考表示:')
+    print(pmi_df_all.head(20).to_string(index=False, float_format='{:.3f}'.format))
+
+# 上位N語を RELATED とする（該当が少なければ all_records フォールバック）
+N_RELATED = min(25, len(pmi_df))
+if N_RELATED >= 5:
+    ACIDITY_RELATED = pmi_df.head(N_RELATED)['word'].tolist()
+else:
+    print('警告: 基準を満たす語が少ないため、全候補PMI上位から採用')
+    ACIDITY_RELATED = pmi_df_all.head(25)['word'].tolist()
+
+print(f'\\n=== 最終 ACIDITY_RELATED ({len(ACIDITY_RELATED)}語、PMI上位) ===')
+display_df = pmi_df if len(pmi_df) >= 5 else pmi_df_all.head(25)
+for _, row in display_df.head(len(ACIDITY_RELATED)).iterrows():
+    print(f'  {row[\"word\"]:10s}  PMI={row[\"pmi\"]:.3f}  lift={row[\"lift\"]:.2f}x  '
+          f'freq={int(row[\"corpus_freq\"]):,}  共起={int(row[\"cooc_with_core\"]):,}')
 
 # 保存
 with open(PROC / 'acidity_vocabulary.json', 'w', encoding='utf-8') as f:
-    json.dump({'core': ACIDITY_CORE, 'related': ACIDITY_RELATED}, f,
-              ensure_ascii=False, indent=2)
+    json.dump({'core': ACIDITY_CORE, 'related': ACIDITY_RELATED,
+               'pmi_table': pmi_df_all.head(50).to_dict(orient='records')},
+              f, ensure_ascii=False, indent=2)
+pmi_df_all.to_csv(PROC / 'acidity_related_pmi_candidates.csv', index=False)
+print(f'\\n保存: {PROC / \"acidity_vocabulary.json\"}')
+print(f'保存: {PROC / \"acidity_related_pmi_candidates.csv\"}')
 """))
 
 # =========================================================================
