@@ -673,28 +673,84 @@ else:
     print('  閾値を満たす語なし。全候補上位20語を参考表示:')
     print(pmi_df_all.head(20).to_string(index=False, float_format='{:.3f}'.format))
 
-# 上位N語を RELATED とする（該当が少なければ all_records フォールバック）
-N_RELATED = min(25, len(pmi_df))
-if N_RELATED >= 5:
-    ACIDITY_RELATED = pmi_df.head(N_RELATED)['word'].tolist()
-else:
-    print('警告: 基準を満たす語が少ないため、全候補PMI上位から採用')
-    ACIDITY_RELATED = pmi_df_all.head(25)['word'].tolist()
+# PMI 上位語は co-occurrence の探索結果として保存し、後続セルで参照
+pmi_df_all.to_csv(PROC / 'acidity_related_pmi_candidates.csv', index=False)
+print(f'\\nPMI候補表を保存: {PROC / \"acidity_related_pmi_candidates.csv\"}')
 
-print(f'\\n=== 最終 ACIDITY_RELATED ({len(ACIDITY_RELATED)}語、PMI上位) ===')
+# PMI 上位語の中で「閾値+共起数」を満たす語の一覧 (参考表示)
+print(f'\\n参考: PMI>={PMI_THRESHOLD:.3f} かつ 共起>={N_MIN_COOC} の上位語')
 display_df = pmi_df if len(pmi_df) >= 5 else pmi_df_all.head(25)
-for _, row in display_df.head(len(ACIDITY_RELATED)).iterrows():
+for _, row in display_df.head(25).iterrows():
     print(f'  {row[\"word\"]:10s}  PMI={row[\"pmi\"]:.3f}  lift={row[\"lift\"]:.2f}x  '
           f'freq={int(row[\"corpus_freq\"]):,}  共起={int(row[\"cooc_with_core\"]):,}')
+"""))
+
+# --- Curated RELATED list ---
+CELLS.append(md("""### PMI 自動選定の限界と curated RELATED の必要性
+
+PMI 上位語には次の問題が含まれる:
+
+1. **汎用味覚語の混入** — 「甘み」「苦味」「辛み」「渋み」などは酸味と高頻度に共起するが、
+   これらは「酸味と一緒に語られる他の味」であって、それ自体は **酸味を意味しない**。
+   日本酒レビューで甘味・苦味・辛みは全味覚軸で頻繁に言及されるため、これらを RELATED
+   に入れると「酸味の言葉のトレンド」ではなく「味覚語彙全般のトレンド」を測ってしまう。
+
+2. **多義的形容の混入** — 「強め」「程良い」「適度」「絶妙」「心地良い」「淡い」などは
+   全味覚に対して使える形容で、それ単独では酸味を喚起しない。
+
+3. **wine tasting term の混入** — 「アタック」「フィニッシュ」「ボディー」「後口」「余韻」
+   などは tasting note 全般の語彙で、酸味専用ではない。
+
+4. **トレンド計測上の問題** — 後段の Section 6 では `has_related = ts に RELATED 語が
+   ひとつでも含まれる` という単純判定でカウントしている。すなわち上記の汎用語が単独で
+   出現したレビュー（酸味とは無関係の文脈）も RELATED-positive 扱いになり、「酸味の言葉
+   のトレンド」を誤って高く見積もる。
+
+そこで、**「単独で出現した時点で酸味を喚起する語」**＝**酸味性の果実・フレーバー語** に
+絞った curated list を最終的な ACIDITY_RELATED として採用する:
+"""))
+
+CELLS.append(code("""# ========================================================================
+# Curated ACIDITY_RELATED: 酸味を喚起する果実・フレーバー語のみ
+# ========================================================================
+# 化学的根拠:
+#   クエン酸系（柑橘）: 柑橘 / レモン / ライム / グレープフルーツ / 柚子 / シトラス
+#   乳酸系: ヨーグルト
+#   酒石酸系（ワイン関連）: ワイン / 葡萄
+#   その他酸味果実: 梅干し / プラム / ベリー / キウイ
+#   直接表現: 甘酸っぱい / 甘酸
+# 除外:
+#   林檎・マスカット・パイナップル等 (甘い品種・甘い香り表現としても使われる多義語)
+#   苦味・甘み・辛み・渋み (他の味覚軸の語)
+#   余韻・アタック・フィニッシュ・ボディー (tasting term 全般)
+#   程良い・強め・適度・絶妙 (汎用形容)
+
+ACIDITY_RELATED = [
+    # 直接酸味を表す
+    '甘酸っぱい', '甘酸',
+    # 柑橘類（クエン酸）
+    '柑橘', 'レモン', 'ライム', 'グレープフルーツ', '柚子', 'シトラス',
+    # 乳酸系
+    'ヨーグルト',
+    # ワイン・葡萄系（酒石酸 + ワインの酸味文脈）
+    'ワイン', '葡萄',
+    # 酸味果実
+    '梅干し', 'プラム', 'ベリー', 'キウイ',
+]
+ACIDITY_RELATED = [w for w in ACIDITY_RELATED if corpus_freq.get(w, 0) >= 50]
+
+print(f'=== Curated ACIDITY_RELATED ({len(ACIDITY_RELATED)}語) ===')
+for w in ACIDITY_RELATED:
+    print(f'  {w:<10s}  freq={corpus_freq.get(w, 0):,}')
 
 # 保存
 with open(PROC / 'acidity_vocabulary.json', 'w', encoding='utf-8') as f:
-    json.dump({'core': ACIDITY_CORE, 'related': ACIDITY_RELATED,
-               'pmi_table': pmi_df_all.head(50).to_dict(orient='records')},
-              f, ensure_ascii=False, indent=2)
-pmi_df_all.to_csv(PROC / 'acidity_related_pmi_candidates.csv', index=False)
+    json.dump({
+        'core': ACIDITY_CORE,
+        'related': ACIDITY_RELATED,
+        'pmi_top50_for_reference': pmi_df_all.head(50).to_dict(orient='records'),
+    }, f, ensure_ascii=False, indent=2)
 print(f'\\n保存: {PROC / \"acidity_vocabulary.json\"}')
-print(f'保存: {PROC / \"acidity_related_pmi_candidates.csv\"}')
 """))
 
 # =========================================================================
@@ -702,13 +758,12 @@ print(f'保存: {PROC / \"acidity_related_pmi_candidates.csv\"}')
 # =========================================================================
 CELLS.append(md("""## Section 6: 酸味語彙の時系列トレンド
 
-確定した `ACIDITY_CORE` / `ACIDITY_RELATED` の語彙について、
-- 全銘柄の年次出現率
-- ランキング Tier 別推移
-- 新政・仙禽・風の森・而今 など先行銘柄 vs 全体
+`ACIDITY_CORE` (酸味を直接指す語) と curated `ACIDITY_RELATED` (酸味を喚起する果実・
+フレーバー語) の出現率を年次で追跡する。
 
-を既存の `trend_analysis.ipynb` のフォーマットで可視化する。
-トークン化済みデータ上で判定するので、regex 誤爆（「酸」が「酸素」「炭酸」と混同等）は大幅に減る。
+- **判定方法**: `has_core = ts に CORE 語をひとつでも含む` / `has_related = ts に RELATED 語をひとつでも含む`。RELATED は curated list なので、単独出現でカウントされても「酸味の言葉」として正当。
+- **対象**: 全銘柄 / ランキング Tier 別 / 先行銘柄 (新政・仙禽・風の森・而今)。
+- **比較対照**: 既存 `trend_analysis.ipynb` の「フルーティ系」キーワード（regex ベース）と並べることで、トークン化判定の精度差も見える。
 """))
 
 CELLS.append(code("""# ヘルパー: 指定語彙のうち1語でも含むレビューの比率
