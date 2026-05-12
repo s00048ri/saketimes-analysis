@@ -1231,9 +1231,179 @@ plt.show()
 """))
 
 # =========================================================================
-# Section 9: Conclusions
+# Section 9: 月別トレンド（季節性検証）
 # =========================================================================
-CELLS.append(md("""## Section 9: 結論"""))
+CELLS.append(md("""## Section 9: 月別トレンド（季節性検証）
+
+isego.blog.jp の業界実感「気温が高い季節に酸味系が急増中」を、322,644 件のレビューで
+検証する。3つの観点で月別パターンを可視化:
+
+1. **全年平均の月別曲線**: 12ヶ月で見た季節パターン（CORE と4タイプを重ね描き）
+2. **Year × Month ヒートマップ**: 年×月の二次元で見て、季節性が近年強まったかを観察
+3. **Pre-2020 vs Post-2020 月別プロファイル**: 季節性が時代とともに変化したかを比較
+"""))
+
+CELLS.append(code("""# tokenized に月情報を付加（rev と1:1対応している前提）
+if 'month' not in tokenized.columns:
+    assert len(tokenized) == len(rev), f'tokenized({len(tokenized)}) != rev({len(rev)})'
+    tokenized['date_parsed'] = rev['date_parsed'].values
+    tokenized['month'] = pd.to_datetime(tokenized['date_parsed']).dt.month.astype(int)
+
+months = list(range(1, 13))
+print(f'月別レビュー数: 最少={tokenized.groupby(\"month\").size().min():,}, 最多={tokenized.groupby(\"month\").size().max():,}')
+
+# ============================================================
+# (1) 全年平均の月別曲線
+# ============================================================
+fig, ax = plt.subplots(figsize=(14, 7))
+
+core_monthly = [tokenized[tokenized['month'] == m]['has_core'].mean() * 100 for m in months]
+ax.plot(months, core_monthly, 'o-', label='ACIDITY_CORE', color='#D32F2F',
+        linewidth=3.5, markersize=10, zorder=10)
+
+related_monthly = [tokenized[tokenized['month'] == m]['has_related'].mean() * 100 for m in months]
+ax.plot(months, related_monthly, 's-', label='ACIDITY_RELATED', color='#F57C00',
+        linewidth=2.5, alpha=0.85)
+
+for type_name in ACID_TYPES:
+    col = f'has_{type_name}'
+    monthly = [tokenized[tokenized['month'] == m][col].mean() * 100 for m in months]
+    ax.plot(months, monthly, 'o--', label=TYPE_LABELS[type_name],
+            color=TYPE_COLORS[type_name], linewidth=2, alpha=0.7)
+
+# 季節背景: 夏（6-8月）と冬（12-2月）を網掛け
+ax.axvspan(5.5, 8.5, alpha=0.08, color='red', label='夏 (6-8月)')
+ax.axvspan(11.5, 12.5, alpha=0.08, color='blue')
+ax.axvspan(0.5, 2.5, alpha=0.08, color='blue', label='冬 (12-2月)')
+
+ax.set_xticks(months)
+ax.set_xticklabels([f'{m}月' for m in months])
+ax.set_xlabel('月')
+ax.set_ylabel('出現率 (%)')
+ax.set_title('月別出現率（全年平均, 2014-2026）— 季節性の確認')
+ax.legend(loc='upper right', fontsize=10)
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.savefig(DATA / 'acidity_monthly_overall.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+# 数値出力
+print('\\n=== 月別 ACIDITY_CORE 出現率 ===')
+print('Month  Rate (%)')
+for m, r in zip(months, core_monthly):
+    bar = '█' * int(r / 0.5)
+    print(f'  {m:2d}月  {r:5.2f}  {bar}')
+"""))
+
+CELLS.append(code("""# ============================================================
+# (2) Year × Month ヒートマップ (CORE)
+# ============================================================
+heatmap_core = tokenized.groupby(['year', 'month'])['has_core'].mean().unstack() * 100
+heatmap_core = heatmap_core.reindex(columns=months)
+
+fig, ax = plt.subplots(figsize=(14, 8))
+sns.heatmap(heatmap_core, annot=True, fmt='.1f', cmap='YlOrRd',
+            cbar_kws={'label': 'ACIDITY_CORE 出現率 (%)'},
+            annot_kws={'size': 9},
+            linewidths=0.3, ax=ax, vmin=0, vmax=heatmap_core.max().max())
+ax.set_xticklabels([f'{m}月' for m in months])
+ax.set_xlabel('月')
+ax.set_ylabel('年')
+ax.set_title('ACIDITY_CORE の Year × Month ヒートマップ\\n（季節性が経年でどう変化したか）')
+plt.tight_layout()
+plt.savefig(DATA / 'acidity_year_month_heatmap.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+# クエン酸系のヒートマップも追加（柑橘・白麹は夏イメージ）
+heatmap_citric = tokenized.groupby(['year', 'month'])['has_CITRIC'].mean().unstack() * 100
+heatmap_citric = heatmap_citric.reindex(columns=months)
+
+fig, ax = plt.subplots(figsize=(14, 8))
+sns.heatmap(heatmap_citric, annot=True, fmt='.1f', cmap='YlOrBr',
+            cbar_kws={'label': 'クエン酸系 出現率 (%)'},
+            annot_kws={'size': 9},
+            linewidths=0.3, ax=ax, vmin=0)
+ax.set_xticklabels([f'{m}月' for m in months])
+ax.set_xlabel('月')
+ax.set_ylabel('年')
+ax.set_title('クエン酸系（柑橘・白麹） の Year × Month ヒートマップ')
+plt.tight_layout()
+plt.savefig(DATA / 'acidity_citric_year_month.png', dpi=150, bbox_inches='tight')
+plt.show()
+"""))
+
+CELLS.append(code("""# ============================================================
+# (3) Pre-2020 vs Post-2020 月別プロファイル比較
+# ============================================================
+early = tokenized[tokenized['year'] < 2020]
+late = tokenized[tokenized['year'] >= 2020]
+
+fig, axes = plt.subplots(1, 2, figsize=(18, 7))
+
+# (a) CORE + RELATED
+core_early = [early[early['month'] == m]['has_core'].mean() * 100 for m in months]
+core_late = [late[late['month'] == m]['has_core'].mean() * 100 for m in months]
+rel_early = [early[early['month'] == m]['has_related'].mean() * 100 for m in months]
+rel_late = [late[late['month'] == m]['has_related'].mean() * 100 for m in months]
+
+axes[0].plot(months, core_early, 'o-', label=f'CORE Pre-2020 (n={len(early):,})',
+             color='#D32F2F', alpha=0.5, linewidth=2)
+axes[0].plot(months, core_late, 'o-', label=f'CORE Post-2020 (n={len(late):,})',
+             color='#D32F2F', linewidth=3)
+axes[0].plot(months, rel_early, 's-', label='RELATED Pre-2020',
+             color='#F57C00', alpha=0.5, linewidth=2)
+axes[0].plot(months, rel_late, 's-', label='RELATED Post-2020',
+             color='#F57C00', linewidth=3)
+axes[0].axvspan(5.5, 8.5, alpha=0.08, color='red')
+axes[0].set_xticks(months)
+axes[0].set_xticklabels([f'{m}月' for m in months])
+axes[0].set_xlabel('月')
+axes[0].set_ylabel('出現率 (%)')
+axes[0].set_title('CORE / RELATED: Pre-2020 vs Post-2020')
+axes[0].legend(fontsize=10)
+axes[0].grid(True, alpha=0.3)
+
+# (b) 4 acid types: Post-2020
+for type_name in ACID_TYPES:
+    col = f'has_{type_name}'
+    monthly_late = [late[late['month'] == m][col].mean() * 100 for m in months]
+    axes[1].plot(months, monthly_late, 'o-', label=TYPE_LABELS[type_name],
+                 color=TYPE_COLORS[type_name], linewidth=2.5)
+
+axes[1].axvspan(5.5, 8.5, alpha=0.08, color='red', label='夏')
+axes[1].axvspan(11.5, 12.5, alpha=0.08, color='blue')
+axes[1].axvspan(0.5, 2.5, alpha=0.08, color='blue', label='冬')
+axes[1].set_xticks(months)
+axes[1].set_xticklabels([f'{m}月' for m in months])
+axes[1].set_xlabel('月')
+axes[1].set_ylabel('出現率 (%)')
+axes[1].set_title(f'酸タイプ別月別 (Post-2020, n={len(late):,})')
+axes[1].legend(fontsize=10)
+axes[1].grid(True, alpha=0.3)
+
+plt.suptitle('月別トレンド比較: 季節性は近年強まったか / どのタイプが夏に増えるか', y=1.00, fontsize=16)
+plt.tight_layout()
+plt.savefig(DATA / 'acidity_monthly_comparison.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+# 数値出力: 夏 vs 冬 の倍率（Post-2020）
+print('\\n=== Post-2020: 夏(6-8月)平均 vs 冬(12-2月)平均 の比 ===')
+summer_mask = late['month'].isin([6, 7, 8])
+winter_mask = late['month'].isin([12, 1, 2])
+summer_late = late[summer_mask]
+winter_late = late[winter_mask]
+for col, label in [('has_core', 'CORE'), ('has_related', 'RELATED')] + \\
+                  [(f'has_{t}', TYPE_LABELS[t]) for t in ACID_TYPES]:
+    s = summer_late[col].mean() * 100
+    w = winter_late[col].mean() * 100
+    ratio = s / w if w > 0 else float('inf')
+    print(f'  {label:<30s}  夏: {s:5.2f}%  冬: {w:5.2f}%  夏/冬 = {ratio:.2f}')
+"""))
+
+# =========================================================================
+# Section 10: Conclusions
+# =========================================================================
+CELLS.append(md("""## Section 10: 結論"""))
 
 CELLS.append(code("""# 主要指標を集計
 core_2014 = tokenized[tokenized['year'] == 2014]['has_core'].mean() * 100 if (tokenized['year'] == 2014).sum() > 100 else np.nan
