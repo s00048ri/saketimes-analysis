@@ -1065,9 +1065,175 @@ print(pmi_df.nsmallest(10, 'delta')[['word', 'pmi_early', 'pmi_late', 'delta', '
 """))
 
 # =========================================================================
-# Section 8: Conclusions
+# Section 8: 酸タイプ別分解
 # =========================================================================
-CELLS.append(md("""## Section 8: 結論"""))
+CELLS.append(md("""## Section 8: 酸タイプ別分解
+
+日本酒に含まれる主要な有機酸（乳酸／クエン酸／リンゴ酸／酒石酸）はそれぞれ異なる
+味覚プロフィールを持ち、製造方法・酵母・原料との結び付きも異なる
+([sakestreet.com](https://sakestreet.com/ja/media/what-is-acidity),
+[isego.blog.jp](https://isego.blog.jp/archives/49725279.html),
+[jp.sake-times.com](https://jp.sake-times.com/think/study/sake_g_sour-taste-of-sake) を参照)。
+
+ここでは、curated ACIDITY_RELATED + CORE の語彙を **化学的根拠に基づき4タイプに分類**し、
+タイプ別のトレンドと先行銘柄の特徴を分析する。
+
+| タイプ | 味わい特徴 | 関連語（本分析） | 製法/酵母（参考） |
+|---|---|---|---|
+| **乳酸系 (LACTIC)** | 丸み・まろやかさ・ヨーグルト的 | 乳酸 / ヨーグルト | 山廃・生酛 |
+| **クエン酸系 (CITRIC)** | シャープ・爽快・レモン的 | 柑橘 / レモン / ライム / グレープフルーツ / 柚子 / シトラス / 白麹 | 白麹・黒麹 |
+| **リンゴ酸系 (MALIC)** | 爽やか・ジューシー・果実的 | プラム / ベリー / キウイ | 特定酵母（28号等） |
+| **酒石酸系 (TARTARIC)** | ワイン的酸味・葡萄香 | 葡萄 / ワイン | ワイン酵母 |
+
+**直接表現** (どのタイプも喚起できる汎用語): 甘酸っぱい / 甘酸 / 梅干し / 酸味 / 酸っぱい / 酸度
+これらはタイプ別分解では使わず、別途「総量」指標として利用する。
+
+> **注意**: タイプ判定は語彙の表層に基づく approximation。「ジューシー」「フルーティ」のような
+> 汎用味覚語はタイプを特定できないため不採用。各タイプ語の出現は必ずしも当該酸の化学的存在を
+> 保証しないが、レビュアーの **認知的・表現的なタイプ別注目度** の代理指標としては妥当。
+"""))
+
+CELLS.append(code("""# 化学的根拠に基づく酸タイプ別語彙
+ACID_TYPES = {
+    'LACTIC':   ['乳酸', 'ヨーグルト'],
+    'CITRIC':   ['柑橘', 'レモン', 'ライム', 'グレープフルーツ', '柚子', 'シトラス', '白麹'],
+    'MALIC':    ['プラム', 'ベリー', 'キウイ'],
+    'TARTARIC': ['葡萄', 'ワイン'],
+}
+TYPE_LABELS = {
+    'LACTIC':   '乳酸系（丸み・まろやか）',
+    'CITRIC':   'クエン酸系（シャープ・柑橘）',
+    'MALIC':    'リンゴ酸系（ジューシー・果実）',
+    'TARTARIC': '酒石酸系（ワイン的）',
+}
+TYPE_COLORS = {
+    'LACTIC':   '#E0AC69',  # cream/yogurt
+    'CITRIC':   '#FBC02D',  # lemon yellow
+    'MALIC':    '#7CB342',  # apple green
+    'TARTARIC': '#7B1FA2',  # wine purple
+}
+
+# 各タイプの doc-level presence
+for type_name, words in ACID_TYPES.items():
+    wset = set(words)
+    tokenized[f'has_{type_name}'] = tokenized['tokens'].apply(
+        lambda ts: any(t in wset for t in ts)
+    )
+
+# 各タイプの全期間 corpus 統計
+print('=' * 60)
+print('酸タイプ別の全期間統計')
+print('=' * 60)
+for type_name in ACID_TYPES:
+    n = tokenized[f'has_{type_name}'].sum()
+    pct = n / len(tokenized) * 100
+    print(f'{TYPE_LABELS[type_name]:<30s}  {n:>7,}件 ({pct:.2f}%)')
+"""))
+
+CELLS.append(code("""# 年次トレンド: タイプ別出現率（全銘柄）
+fig, ax = plt.subplots(figsize=(14, 7))
+for type_name in ACID_TYPES:
+    rates = yearly_rate(tokenized, f'has_{type_name}')
+    ax.plot(years, rates, 'o-', label=TYPE_LABELS[type_name],
+            color=TYPE_COLORS[type_name], linewidth=2.5, markersize=7)
+
+ax.set_xlabel('年')
+ax.set_ylabel('レビュー中の出現率 (%)')
+ax.set_title('酸タイプ別の出現率推移（全銘柄）')
+ax.legend(fontsize=12)
+ax.set_xticks(years)
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.savefig(DATA / 'acidity_by_type_trend.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+# 2014→2026 の倍率を計算
+print('\\n=== 2014→2026 タイプ別倍率 ===')
+for type_name in ACID_TYPES:
+    rates = yearly_rate(tokenized, f'has_{type_name}')
+    r_2014 = rates[0] if not np.isnan(rates[0]) else 0
+    r_2021 = rates[years.index(2021)] if 2021 in years else np.nan
+    r_2026 = rates[-1]
+    ratio_2014 = r_2026 / r_2014 if r_2014 > 0 else float('inf')
+    print(f'{TYPE_LABELS[type_name]:<30s} 2014: {r_2014:5.2f}% → 2021: {r_2021:5.2f}% → 2026: {r_2026:5.2f}%  ({ratio_2014:.1f}×)')
+"""))
+
+CELLS.append(code("""# 先行銘柄 × 酸タイプのプロファイル（全期間平均）
+PIONEERS_FOR_TYPES = ['新政', '仙禽', '風の森', '而今', '富久長', '飛鸞', '土田']
+
+profile_data = []
+for brand in PIONEERS_FOR_TYPES:
+    mask = tokenized['name'].fillna('').str.contains(brand, na=False)
+    sub = tokenized[mask]
+    if len(sub) < 100:
+        continue
+    row = {'銘柄': brand, 'レビュー数': len(sub)}
+    for type_name in ACID_TYPES:
+        row[TYPE_LABELS[type_name]] = sub[f'has_{type_name}'].mean() * 100
+    profile_data.append(row)
+
+# 全銘柄平均も追加
+row = {'銘柄': '【全銘柄平均】', 'レビュー数': len(tokenized)}
+for type_name in ACID_TYPES:
+    row[TYPE_LABELS[type_name]] = tokenized[f'has_{type_name}'].mean() * 100
+profile_data.append(row)
+
+profile_df = pd.DataFrame(profile_data)
+print(profile_df.to_string(index=False, float_format='{:.1f}'.format))
+
+# Heatmap で可視化
+import seaborn as sns
+fig, ax = plt.subplots(figsize=(13, 6))
+heatmap_data = profile_df.set_index('銘柄').drop(columns=['レビュー数'])
+sns.heatmap(heatmap_data, annot=True, fmt='.1f', cmap='YlOrRd',
+            cbar_kws={'label': '出現率 (%)'},
+            annot_kws={'size': 11},
+            linewidths=0.5, ax=ax)
+ax.set_title('先行銘柄 × 酸タイプ: 出現率プロファイル（全期間）')
+ax.set_xlabel('酸タイプ')
+ax.set_ylabel('')
+plt.xticks(rotation=15, ha='right')
+plt.tight_layout()
+plt.savefig(DATA / 'acidity_brand_type_heatmap.png', dpi=150, bbox_inches='tight')
+plt.show()
+"""))
+
+CELLS.append(code("""# CITRIC（白麹を含む）の時系列を先行銘柄別に深掘り
+# 白麹採用銘柄として知られる富久長・飛鸞・寒菊・KUROKABUTOなどの追跡
+fig, axes = plt.subplots(2, 2, figsize=(18, 12))
+
+for ax, type_name in zip(axes.flat, ACID_TYPES.keys()):
+    col = f'has_{type_name}'
+    ax.plot(years, yearly_rate(tokenized, col), 'o-',
+            label='全銘柄', color='gray', linewidth=2.5, alpha=0.6)
+
+    for brand in ['新政', '仙禽', '風の森', '富久長']:
+        mask = tokenized['name'].fillna('').str.contains(brand, na=False)
+        sub = tokenized[mask]
+        if len(sub) < 200:
+            continue
+        rates = [sub[sub['year'] == y][col].mean() * 100
+                 if (sub['year'] == y).sum() > 30 else np.nan
+                 for y in years]
+        ax.plot(years, rates, 'o-', label=brand, linewidth=2)
+
+    ax.set_title(f'{TYPE_LABELS[type_name]}')
+    ax.set_xlabel('年')
+    ax.set_ylabel('出現率 (%)')
+    ax.legend(fontsize=10)
+    ax.set_xticks(years)
+    ax.grid(True, alpha=0.3)
+
+plt.suptitle('酸タイプ × 先行銘柄: 各タイプを誰が牽引したか', y=1.00, fontsize=18)
+plt.tight_layout()
+plt.savefig(DATA / 'acidity_type_by_pioneer.png', dpi=150, bbox_inches='tight')
+plt.show()
+"""))
+
+# =========================================================================
+# Section 9: Conclusions
+# =========================================================================
+CELLS.append(md("""## Section 9: 結論"""))
 
 CELLS.append(code("""# 主要指標を集計
 core_2014 = tokenized[tokenized['year'] == 2014]['has_core'].mean() * 100 if (tokenized['year'] == 2014).sum() > 100 else np.nan
@@ -1077,6 +1243,15 @@ rel_2019 = tokenized[tokenized['year'] == 2019]['has_related'].mean() * 100
 rel_2025 = tokenized[tokenized['year'] == 2025]['has_related'].mean() * 100
 
 top10_core_2025 = tokenized[(tokenized['tier'] == 'Top10') & (tokenized['year'] == 2025)]['has_core'].mean() * 100
+
+# 酸タイプ別の 2014→2026 倍率
+type_summary = {}
+for type_name in ACID_TYPES:
+    col = f'has_{type_name}'
+    rates = yearly_rate(tokenized, col)
+    r0 = rates[0] if not np.isnan(rates[0]) else 0
+    r_2026 = rates[-1]
+    type_summary[type_name] = (r0, r_2026, r_2026 / r0 if r0 > 0 else float('inf'))
 
 print('=' * 70)
 print('酸味レビュー分析の結論')
@@ -1089,8 +1264,8 @@ print(f'''
     一つの評価軸として機能していることがデータから示唆される。
 
 ■ ACIDITY_CORE ({", ".join(ACIDITY_CORE)}) の時系列推移
-  - 2019年: {rel_2019 if np.isnan(core_2019) else core_2019:.1f}% → 2025年: {core_2025:.1f}%
-  - ACIDITY_RELATED: 2019年 {rel_2019:.1f}% → 2025年 {rel_2025:.1f}%
+  - 2019年: {core_2019:.1f}% → 2025年: {core_2025:.1f}%
+  - ACIDITY_RELATED (curated 16語): 2019年 {rel_2019:.1f}% → 2025年 {rel_2025:.1f}%
   → 「酸味」という語そのものが、過去のネガティブ文脈から明示的に評価語として使われる頻度が
     増加したことを示している。
 
@@ -1108,6 +1283,15 @@ print(f'''
     近年は「ジューシー・フルーティ・白ワイン・ヨーグルト・柑橘」等の果実発酵系との
     結び付きが急上昇。これは「酸味 = 切れ」から「酸味 = 複雑な旨さ・果実性」への
     ポジティブな意味シフトを定量的に示している。
+
+■ 酸タイプ別の動向 (Section 8)
+''')
+for type_name, (r0, r_2026, ratio) in type_summary.items():
+    print(f'  {TYPE_LABELS[type_name]:<30s}  2014年 {r0:5.2f}% → 2026年 {r_2026:5.2f}%  ({ratio:.1f}×)')
+print('''
+  → どの酸タイプも増加しているが、増加率と絶対値はタイプ間で大きく異なる。
+    Section 8 の brand × type ヒートマップから、新政・仙禽・風の森・富久長 など
+    先行銘柄ごとに「得意な酸タイプ」が異なることも確認できる。
 ''')
 
 print('\\n生成されたPNG:')
