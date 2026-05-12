@@ -190,6 +190,43 @@ else:
     tokenized.to_parquet(TOKENIZED_PATH, index=False)
     print(f'保存: {TOKENIZED_PATH}')
 
+# ユーザー辞書: fugashi/unidic-lite で正しく1語化されない重要語を後付けで挿入。
+# 「白麹」は「白」+「麹」に分割され、両方1文字フィルタで消える。
+# 「黒麹」は1語化されるが lemma が異体字「黒麴」になり一貫性がない。
+# raw comment への substring match で、該当する語を tokens に追加する（冪等）。
+USER_LEXICON = {'白麹'}
+
+def _patch_tokens(row):
+    toks = list(row['tokens']) if isinstance(row['tokens'], (list, np.ndarray)) else []
+    changed = False
+    for w in USER_LEXICON:
+        if w in row['comment'] and w not in toks:
+            toks.append(w)
+            changed = True
+    return toks, changed
+
+# まず該当 doc 数を概算（軽量チェック）
+sample_changes = 0
+for w in USER_LEXICON:
+    sample_changes += tokenized['comment'].str.contains(w, na=False).sum()
+print(f'USER_LEXICON ({USER_LEXICON}) を含む生コメント数: {sample_changes:,}')
+
+# 適用が既に済んでいるか確認（任意の語が既にどこかの tokens に存在すれば済とみなす）
+already_applied = any(
+    any(w in toks for toks in tokenized['tokens'].head(2000))
+    for w in USER_LEXICON
+)
+if not already_applied and sample_changes > 0:
+    print('USER_LEXICON を tokens に追加中...')
+    patched = tokenized.apply(_patch_tokens, axis=1, result_type='expand')
+    patched.columns = ['tokens', 'changed']
+    n_changed = int(patched['changed'].sum())
+    tokenized['tokens'] = patched['tokens']
+    tokenized.to_parquet(TOKENIZED_PATH, index=False)
+    print(f'  {n_changed:,} 文書を更新し再保存')
+else:
+    print('USER_LEXICON は適用済み（または該当なし）')
+
 # Sanity check: 10 examples
 print('\\n--- 前処理サンプル（3件）---')
 for i in [0, 1000, 50000]:
@@ -719,11 +756,13 @@ CELLS.append(code("""# =========================================================
 #   酒石酸系（ワイン関連）: ワイン / 葡萄
 #   その他酸味果実: 梅干し / プラム / ベリー / キウイ
 #   直接表現: 甘酸っぱい / 甘酸
+#   製法（クエン酸を多量に生成する麹）: 白麹
 # 除外:
 #   林檎・マスカット・パイナップル等 (甘い品種・甘い香り表現としても使われる多義語)
 #   苦味・甘み・辛み・渋み (他の味覚軸の語)
 #   余韻・アタック・フィニッシュ・ボディー (tasting term 全般)
 #   程良い・強め・適度・絶妙 (汎用形容)
+#   山廃・生酛・黒麹: ユーザー判断により今回は不採用（製法 = 必ず酸味とは限らない）
 
 ACIDITY_RELATED = [
     # 直接酸味を表す
@@ -736,6 +775,8 @@ ACIDITY_RELATED = [
     'ワイン', '葡萄',
     # 酸味果実
     '梅干し', 'プラム', 'ベリー', 'キウイ',
+    # 製法語（クエン酸を強く生成する麹で、酸味と直接結びつく）
+    '白麹',
 ]
 ACIDITY_RELATED = [w for w in ACIDITY_RELATED if corpus_freq.get(w, 0) >= 50]
 
