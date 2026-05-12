@@ -1401,9 +1401,143 @@ for col, label in [('has_core', 'CORE'), ('has_related', 'RELATED')] + \\
 """))
 
 # =========================================================================
-# Section 10: Conclusions
+# Section 10: 都道府県別の酸味プロファイル
 # =========================================================================
-CELLS.append(md("""## Section 10: 結論"""))
+CELLS.append(md("""## Section 10: 都道府県別の酸味プロファイル
+
+`data/brands.csv` の `prefecture` 列を使い、銘柄→都道府県を紐付けて、
+**どの都道府県が酸味の強い日本酒を出しているか** を分析する。
+
+- **集計単位**: レビュー単位（同じ蔵でレビュー数が多いほど集計に影響）
+- **絞り込み**: レビュー数 ≥ 500 の都道府県のみ（統計的安定性）
+- **指標**: ACIDITY_CORE 出現率、ACIDITY_RELATED 出現率、各酸タイプの出現率
+"""))
+
+CELLS.append(code("""# brand_id → prefecture 紐付け
+brands_df = pd.read_csv(DATA / 'brands.csv')
+pref_map = dict(zip(brands_df['brand_id'], brands_df['prefecture']))
+tokenized['prefecture'] = tokenized['brand_id'].map(pref_map)
+
+n_unmatched = tokenized['prefecture'].isna().sum()
+print(f'都道府県紐付け不能レビュー: {n_unmatched:,} / {len(tokenized):,} ({100*n_unmatched/len(tokenized):.2f}%)')
+
+# 都道府県別集計
+agg_cols = {
+    'n_reviews': ('brand_id', 'count'),
+    'n_brands': ('brand_id', 'nunique'),
+    'core': ('has_core', 'mean'),
+    'related': ('has_related', 'mean'),
+}
+for type_name in ACID_TYPES:
+    agg_cols[type_name] = (f'has_{type_name}', 'mean')
+
+pref_stats = tokenized.dropna(subset=['prefecture']).groupby('prefecture').agg(**agg_cols)
+
+# % 表示
+for col in ['core', 'related'] + list(ACID_TYPES.keys()):
+    pref_stats[col] = pref_stats[col] * 100
+
+# 統計的安定性のため最低 500 レビューに絞る
+pref_stats = pref_stats[pref_stats['n_reviews'] >= 500].copy()
+pref_stats = pref_stats.sort_values('core', ascending=False)
+print(f'\\n対象都道府県数 (≥500 レビュー): {len(pref_stats)}')
+print('\\n=== ACIDITY_CORE 出現率トップ15都道府県 ===')
+print(pref_stats[['n_reviews', 'n_brands', 'core', 'related']].head(15).to_string(
+    float_format='{:.2f}'.format))
+"""))
+
+CELLS.append(code("""# トップ15都道府県の Bar chart (CORE)
+top15 = pref_stats.head(15)
+bottom15 = pref_stats.tail(15).iloc[::-1]  # 下位から見ても比較できる
+
+fig, axes = plt.subplots(1, 2, figsize=(18, 9))
+y_pos = np.arange(len(top15))
+axes[0].barh(y_pos, top15['core'].values, color='#D32F2F', alpha=0.85)
+axes[0].set_yticks(y_pos)
+axes[0].set_yticklabels(top15.index)
+axes[0].invert_yaxis()
+axes[0].set_xlabel('ACIDITY_CORE 出現率 (%)')
+axes[0].set_title('CORE 出現率トップ15都道府県')
+for i, (idx, row) in enumerate(top15.iterrows()):
+    axes[0].text(row['core'] + 0.2, i, f"{row['core']:.1f}% (n={int(row['n_reviews']):,})",
+                 va='center', fontsize=10)
+axes[0].axvline(tokenized['has_core'].mean() * 100, color='gray',
+                linestyle='--', alpha=0.6, label='全国平均')
+axes[0].legend()
+
+# ボトム15（参考）
+y_pos = np.arange(len(bottom15))
+axes[1].barh(y_pos, bottom15['core'].values, color='#1976D2', alpha=0.75)
+axes[1].set_yticks(y_pos)
+axes[1].set_yticklabels(bottom15.index)
+axes[1].invert_yaxis()
+axes[1].set_xlabel('ACIDITY_CORE 出現率 (%)')
+axes[1].set_title('CORE 出現率ボトム15都道府県（参考）')
+for i, (idx, row) in enumerate(bottom15.iterrows()):
+    axes[1].text(row['core'] + 0.2, i, f"{row['core']:.1f}% (n={int(row['n_reviews']):,})",
+                 va='center', fontsize=10)
+axes[1].axvline(tokenized['has_core'].mean() * 100, color='gray',
+                linestyle='--', alpha=0.6, label='全国平均')
+axes[1].legend()
+
+plt.suptitle('都道府県別: ACIDITY_CORE 出現率（レビュー数 ≥500 の都道府県）', y=1.00, fontsize=18)
+plt.tight_layout()
+plt.savefig(DATA / 'acidity_by_prefecture_core.png', dpi=150, bbox_inches='tight')
+plt.show()
+"""))
+
+CELLS.append(code("""# 都道府県 × 酸タイプ ヒートマップ（トップ20）
+top20 = pref_stats.head(20)
+heatmap = top20[list(ACID_TYPES.keys())].copy()
+heatmap.columns = [TYPE_LABELS[c].replace('系（', '\\n（') for c in heatmap.columns]
+
+fig, ax = plt.subplots(figsize=(14, 10))
+sns.heatmap(heatmap, annot=True, fmt='.2f', cmap='YlOrRd',
+            cbar_kws={'label': '出現率 (%)'},
+            annot_kws={'size': 10},
+            linewidths=0.3, ax=ax)
+ax.set_title('CORE 上位20都道府県 × 酸タイプ プロファイル')
+ax.set_xlabel('酸タイプ')
+ax.set_ylabel('都道府県')
+plt.tight_layout()
+plt.savefig(DATA / 'acidity_prefecture_type_heatmap.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+# 表形式でも出力
+print('=== トップ20都道府県 × 酸タイプ ===')
+print(top20.assign(**{
+    '銘柄数': top20['n_brands'].astype(int),
+    'レビュー数': top20['n_reviews'].astype(int),
+})[['銘柄数', 'レビュー数', 'core', 'related'] + list(ACID_TYPES.keys())].to_string(
+    float_format='{:.2f}'.format))
+"""))
+
+CELLS.append(code("""# 各酸タイプで1位の都道府県を特定（lead by type）
+print('=' * 70)
+print('各酸タイプのトップ都道府県（レビュー数 ≥ 500）')
+print('=' * 70)
+for type_name in ACID_TYPES:
+    top = pref_stats.sort_values(type_name, ascending=False).head(5)
+    print(f'\\n{TYPE_LABELS[type_name]}:')
+    for pref, row in top.iterrows():
+        print(f'  {pref:<6s}  {row[type_name]:5.2f}%  (n_reviews={int(row[\"n_reviews\"]):,}, n_brands={int(row[\"n_brands\"])})')
+
+# 全国平均比較
+print('\\n--- 全国平均（レビュー単位） ---')
+all_avg = tokenized.dropna(subset=['prefecture']).agg({
+    'has_core': 'mean', 'has_related': 'mean',
+    **{f'has_{t}': 'mean' for t in ACID_TYPES},
+}) * 100
+print(f'  CORE     : {all_avg[\"has_core\"]:5.2f}%')
+print(f'  RELATED  : {all_avg[\"has_related\"]:5.2f}%')
+for t in ACID_TYPES:
+    print(f'  {TYPE_LABELS[t]:<30s} {all_avg[f\"has_{t}\"]:5.2f}%')
+"""))
+
+# =========================================================================
+# Section 11: Conclusions
+# =========================================================================
+CELLS.append(md("""## Section 11: 結論"""))
 
 CELLS.append(code("""# 主要指標を集計
 core_2014 = tokenized[tokenized['year'] == 2014]['has_core'].mean() * 100 if (tokenized['year'] == 2014).sum() > 100 else np.nan
