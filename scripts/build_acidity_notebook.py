@@ -1708,9 +1708,118 @@ else:
 """))
 
 # =========================================================================
-# Section 12: Conclusions
+# Section 12: 既存「甘口・辛口・芳醇・軽快・フルーティ」分析に酸味系を統合
 # =========================================================================
-CELLS.append(md("""## Section 12: 結論"""))
+CELLS.append(md("""## Section 12: 6カテゴリ味覚トレンド（酸味系を統合）
+
+既存 `analysis/trend_analysis.ipynb` で使っていた **5カテゴリの味覚キーワード**
+（甘口系・辛口系・芳醇系・軽快系・フルーティ系）の時系列に、本分析で構成した
+**6つ目のカテゴリ「酸味系」** を追加して並列比較する。
+
+- 集計は **regex で raw comment に対して** 行う（既存 trend_analysis と一致させるため）
+- 酸味系 = ACIDITY_CORE + ACIDITY_RELATED の主要語をパイプ結合したregex
+- 上位50位 vs 全体のギャップ推移も比較
+
+このセクションで、酸味系トレンドが他の主要味覚カテゴリと比べて
+**どの程度の規模で・どの程度の速さで** 拡大したかを直感的に位置づける。
+"""))
+
+CELLS.append(code("""# 既存 trend_analysis.ipynb と同じ 5 カテゴリ + 酸味系
+kw_groups = {
+    '甘口系':       '甘い|甘み|甘味|甘口|甘さ|甘やか',
+    '辛口系':       '辛い|辛口|ドライ',
+    '芳醇系':       '芳醇|旨味|旨み|濃厚|コク|リッチ',
+    '軽快系':       'すっきり|スッキリ|爽やか|クリア|軽い|軽快',
+    'フルーティ系': 'フルーティ|フルーツ|果実|メロン|りんご|パイナップル|マスカット|マンゴー|桃|バナナ|ライチ|洋梨',
+    # 新規追加（CORE + RELATED の主要語）。誤爆を避けるため bare '酸' は除外
+    '酸味系':       '酸味|酸っぱ|酸度|乳酸|甘酸|柑橘|レモン|ライム|グレープフルーツ|柚子|シトラス|ヨーグルト|葡萄|ワイン|梅干|プラム|ベリー|キウイ|白麹',
+}
+
+# 既存スタイルの色設定 + 酸味系
+group_colors = {
+    '甘口系': '#E91E63',
+    '辛口系': '#2196F3',
+    '芳醇系': '#FF9800',
+    '軽快系': '#4CAF50',
+    'フルーティ系': '#9C27B0',
+    '酸味系': '#D32F2F',  # 酸味系は強調赤
+}
+
+# rev (raw comments)を使った regex 集計
+rev_c = rev.dropna(subset=['comment']).copy()
+print(f'集計対象: {len(rev_c):,} 件のコメント')
+
+fig, ax = plt.subplots(figsize=(14, 7))
+for label, pattern in kw_groups.items():
+    rates_all = []
+    for y in years:
+        sub = rev_c[rev_c['year'] == y]
+        rate = sub['comment'].str.contains(pattern, na=False).mean() * 100
+        rates_all.append(rate)
+    lw = 3.5 if label == '酸味系' else 2.5
+    ax.plot(years, rates_all, 'o-', label=label,
+            color=group_colors[label], linewidth=lw,
+            markersize=8 if label == '酸味系' else 6)
+
+ax.set_title('全銘柄のキーワード出現率推移（6カテゴリ統合, regex集計）', fontsize=14)
+ax.set_xlabel('年')
+ax.set_ylabel('レビュー中の出現率 (%)')
+ax.legend(fontsize=12)
+ax.set_xticks(years)
+ax.grid(True, alpha=0.3)
+
+plt.suptitle('既存5カテゴリ + 酸味系: 全銘柄での時系列推移', fontsize=14, y=1.02)
+plt.tight_layout()
+plt.savefig(DATA / 'acidity_six_categories_trend.png', dpi=150, bbox_inches='tight')
+plt.show()
+"""))
+
+CELLS.append(code("""# Top50 vs 全体 のギャップ推移（既存 trend_gap.png スタイル）
+fig, ax = plt.subplots(figsize=(13, 7))
+
+for label, pattern in kw_groups.items():
+    diffs = []
+    for y in years:
+        y_all = rev_c[rev_c['year'] == y]
+        y_top = rev_c[(rev_c['year'] == y) & (rev_c['rank'] <= 50)]
+        if len(y_top) > 100:
+            r_all = y_all['comment'].str.contains(pattern, na=False).mean() * 100
+            r_top = y_top['comment'].str.contains(pattern, na=False).mean() * 100
+            diffs.append(r_top - r_all)
+        else:
+            diffs.append(np.nan)
+    lw = 3 if label == '酸味系' else 2
+    ax.plot(years, diffs, 'o-', label=label, color=group_colors[label], linewidth=lw)
+
+ax.axhline(0, color='gray', linestyle='--', alpha=0.5)
+ax.set_xlabel('年', fontsize=12)
+ax.set_ylabel('差 (Top50位 − 全体) [ポイント]', fontsize=12)
+ax.set_title('上位50位と全体のキーワード出現率の差の推移\\n（正の値 = 上位ほどその傾向が強い）', fontsize=14)
+ax.legend(fontsize=11)
+ax.set_xticks(years)
+ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+plt.savefig(DATA / 'acidity_six_categories_gap.png', dpi=150, bbox_inches='tight')
+plt.show()
+
+# 数値で2014→2025の変化を出力
+print('=' * 70)
+print('6カテゴリの 2014 → 2025 全銘柄出現率変化')
+print('=' * 70)
+for label, pattern in kw_groups.items():
+    r_2014 = rev_c[rev_c['year'] == 2014]['comment'].str.contains(pattern, na=False).mean() * 100
+    r_2021 = rev_c[rev_c['year'] == 2021]['comment'].str.contains(pattern, na=False).mean() * 100
+    r_2025 = rev_c[rev_c['year'] == 2025]['comment'].str.contains(pattern, na=False).mean() * 100
+    diff_2014_2025 = r_2025 - r_2014
+    ratio = r_2025 / r_2014 if r_2014 > 0 else float('inf')
+    print(f'  {label:<10s}  2014: {r_2014:5.1f}%  2021: {r_2021:5.1f}%  2025: {r_2025:5.1f}%  ({diff_2014_2025:+5.1f}pt, {ratio:.2f}×)')
+"""))
+
+# =========================================================================
+# Section 13: Conclusions
+# =========================================================================
+CELLS.append(md("""## Section 13: 結論"""))
 
 CELLS.append(code("""# 主要指標を集計
 core_2014 = tokenized[tokenized['year'] == 2014]['has_core'].mean() * 100 if (tokenized['year'] == 2014).sum() > 100 else np.nan
