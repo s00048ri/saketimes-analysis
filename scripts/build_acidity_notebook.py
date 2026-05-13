@@ -1535,9 +1535,182 @@ for t in ACID_TYPES:
 """))
 
 # =========================================================================
-# Section 11: Conclusions
+# Section 11: Google Trends 比較
 # =========================================================================
-CELLS.append(md("""## Section 11: 結論"""))
+CELLS.append(md("""## Section 11: Google Trends との比較
+
+レビューテキスト中の酸味語彙トレンドが、**一般消費者の検索行動** に
+反映されているかを確認する。Saketime 上での議論（書き手＝主に上級ファン）
+と、Google 検索（一般消費者）のシグナルがどれだけ重なるかを見る。
+
+**データソース**:
+- `data/google_trends_taste.csv`: 日本酒 辛口 / 甘口 / フルーティ (既存)
+- `data/google_trends_style.csv`: 淡麗辛口 / 芳醇旨口 / 純米吟醸 (既存)
+- `data/google_trends_acid_core.csv`: 日本酒 酸味 / 酸度 / 白麹 / 生酛 (存在すれば)
+- `data/google_trends_pioneers.csv`: 新政 / 仙禽 / 飛鸞 / 富久長 (存在すれば)
+
+> **注意**: 酸味専用クエリの新規取得は Google Trends API のレート制限
+> (HTTP 429) を受けて未完了の場合がある。その場合は既存の関連クエリ
+> (フルーティ・甘口・辛口) との比較で代替する。
+"""))
+
+CELLS.append(code("""# Google Trends データを読み込んで年次集計
+gt_files = {
+    'taste':     DATA / 'google_trends_taste.csv',
+    'style':     DATA / 'google_trends_style.csv',
+    'acid_core': DATA / 'google_trends_acid_core.csv',
+    'pioneers':  DATA / 'google_trends_pioneers.csv',
+}
+
+gt_yearly = {}
+for name, path in gt_files.items():
+    if not path.exists():
+        print(f'  {name}: ファイルなし（スキップ）')
+        continue
+    df = pd.read_csv(path)
+    df['date'] = pd.to_datetime(df['date'])
+    df = df[(df['date'] >= '2014-01-01') & (df['date'] <= '2026-12-31')].copy()
+    df['year'] = df['date'].dt.year
+    keyword_cols = [c for c in df.columns if c not in ('date', 'year', 'isPartial')]
+    yearly = df.groupby('year')[keyword_cols].mean()
+    gt_yearly[name] = yearly
+    print(f'  {name}: keywords={keyword_cols}, years={list(yearly.index)}')
+
+# Saketime レビューの年次集計（比較用）
+saketime_yearly = pd.DataFrame(index=years)
+saketime_yearly['CORE'] = [tokenized[tokenized['year'] == y]['has_core'].mean() * 100 for y in years]
+saketime_yearly['RELATED'] = [tokenized[tokenized['year'] == y]['has_related'].mean() * 100 for y in years]
+for type_name in ACID_TYPES:
+    col = f'has_{type_name}'
+    saketime_yearly[type_name] = [tokenized[tokenized['year'] == y][col].mean() * 100 for y in years]
+
+print('\\n=== Saketime 年次（参考） ===')
+print(saketime_yearly.round(2).to_string())
+"""))
+
+CELLS.append(code("""# 既存データ（taste + style）と Saketime CORE/RELATED を併置プロット
+fig, axes = plt.subplots(2, 2, figsize=(18, 11))
+
+# Plot 1: Google Trends Taste
+if 'taste' in gt_yearly:
+    yt = gt_yearly['taste']
+    for col in yt.columns:
+        axes[0, 0].plot(yt.index, yt[col], 'o-', label=col, linewidth=2)
+    axes[0, 0].set_title('Google Trends: 味覚クエリ')
+    axes[0, 0].set_xlabel('年')
+    axes[0, 0].set_ylabel('検索指数 (相対)')
+    axes[0, 0].legend()
+    axes[0, 0].grid(True, alpha=0.3)
+
+# Plot 2: Google Trends Style
+if 'style' in gt_yearly:
+    ys = gt_yearly['style']
+    for col in ys.columns:
+        axes[0, 1].plot(ys.index, ys[col], 'o-', label=col, linewidth=2)
+    axes[0, 1].set_title('Google Trends: スタイル/スペックワード')
+    axes[0, 1].set_xlabel('年')
+    axes[0, 1].set_ylabel('検索指数 (相対)')
+    axes[0, 1].legend()
+    axes[0, 1].grid(True, alpha=0.3)
+
+# Plot 3: Saketime CORE/RELATED
+axes[1, 0].plot(saketime_yearly.index, saketime_yearly['CORE'], 'o-',
+                label='ACIDITY_CORE', color='#D32F2F', linewidth=2.5)
+axes[1, 0].plot(saketime_yearly.index, saketime_yearly['RELATED'], 's-',
+                label='ACIDITY_RELATED', color='#F57C00', linewidth=2.5)
+axes[1, 0].set_title('Saketime: 酸味語彙の出現率')
+axes[1, 0].set_xlabel('年')
+axes[1, 0].set_ylabel('レビュー中の出現率 (%)')
+axes[1, 0].legend()
+axes[1, 0].grid(True, alpha=0.3)
+
+# Plot 4: Normalize both to relative scale (2014=100) for visual correlation
+def normalize_baseline(s, base_year=2014):
+    if base_year not in s.index or s.loc[base_year] == 0:
+        # 0でない最初の年を使う
+        nonzero = s[s > 0]
+        if len(nonzero) == 0:
+            return s
+        base = nonzero.iloc[0]
+    else:
+        base = s.loc[base_year]
+    return s / base * 100
+
+saketime_core_norm = normalize_baseline(saketime_yearly['CORE'])
+axes[1, 1].plot(saketime_core_norm.index, saketime_core_norm, 'o-',
+                label='Saketime: ACIDITY_CORE', color='#D32F2F', linewidth=3)
+
+if 'taste' in gt_yearly:
+    for col in gt_yearly['taste'].columns:
+        norm = normalize_baseline(gt_yearly['taste'][col])
+        axes[1, 1].plot(norm.index, norm, 's--', label=f'GT: {col}', alpha=0.7)
+
+axes[1, 1].set_title('正規化比較 (2014=100 or 初期非ゼロ年=100)')
+axes[1, 1].set_xlabel('年')
+axes[1, 1].set_ylabel('指数（基準年=100）')
+axes[1, 1].legend(fontsize=9)
+axes[1, 1].grid(True, alpha=0.3)
+axes[1, 1].axhline(100, color='gray', linestyle='--', alpha=0.4)
+
+plt.suptitle('Google Trends vs Saketime レビュー言語', y=1.00, fontsize=18)
+plt.tight_layout()
+plt.savefig(DATA / 'acidity_google_trends_comparison.png', dpi=150, bbox_inches='tight')
+plt.show()
+"""))
+
+CELLS.append(code("""# 相関分析: Google Trends × Saketime
+from scipy.stats import pearsonr
+
+print('=' * 70)
+print('Google Trends × Saketime CORE/RELATED 年次相関 (Pearson r)')
+print('=' * 70)
+common_years = sorted(set(saketime_yearly.index) & set(range(2014, 2027)))
+
+for gt_name, df in gt_yearly.items():
+    for kw in df.columns:
+        gt_series = df.reindex(common_years)[kw]
+        for sk_col in ['CORE', 'RELATED'] + list(ACID_TYPES.keys()):
+            sk_series = saketime_yearly.reindex(common_years)[sk_col]
+            mask = gt_series.notna() & sk_series.notna()
+            if mask.sum() < 4:
+                continue
+            r, p = pearsonr(gt_series[mask], sk_series[mask])
+            if abs(r) >= 0.7:
+                star = '★' if p < 0.05 else ' '
+                print(f'  {star} {gt_name}.{kw:<20s} × Saketime.{sk_col:<10s}  r={r:+.3f}  p={p:.3g}')
+
+print('\\n注: r >= 0.7 のものだけ表示。★はp<0.05')
+"""))
+
+CELLS.append(code("""# 酸味専用クエリ (acid_core / pioneers) がある場合の追加プロット
+extra_files = ['acid_core', 'pioneers']
+extras_present = [name for name in extra_files if name in gt_yearly]
+
+if extras_present:
+    fig, axes = plt.subplots(1, len(extras_present), figsize=(8 * len(extras_present), 7),
+                             squeeze=False)
+    for ax, name in zip(axes[0], extras_present):
+        df = gt_yearly[name]
+        for col in df.columns:
+            ax.plot(df.index, df[col], 'o-', label=col, linewidth=2)
+        ax.set_title(f'Google Trends: {name}')
+        ax.set_xlabel('年')
+        ax.set_ylabel('検索指数 (相対)')
+        ax.legend()
+        ax.grid(True, alpha=0.3)
+    plt.suptitle('酸味専用クエリの Google Trends', y=1.02, fontsize=16)
+    plt.tight_layout()
+    plt.savefig(DATA / 'acidity_gt_acid_specific.png', dpi=150, bbox_inches='tight')
+    plt.show()
+else:
+    print('注: 酸味専用クエリのGTデータが未取得です。')
+    print('     pytrends のレート制限解除後、scripts/fetch_google_trends.py を実行して再生成できます。')
+"""))
+
+# =========================================================================
+# Section 12: Conclusions
+# =========================================================================
+CELLS.append(md("""## Section 12: 結論"""))
 
 CELLS.append(code("""# 主要指標を集計
 core_2014 = tokenized[tokenized['year'] == 2014]['has_core'].mean() * 100 if (tokenized['year'] == 2014).sum() > 100 else np.nan
