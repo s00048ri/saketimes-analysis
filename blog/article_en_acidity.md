@@ -1,8 +1,10 @@
-# What replaced "dry"? Acidity, the quiet new pillar of modern Japanese sake — what 320,000 reviews and 10 years of search data reveal
+# What replaced "dry"? Acidity, the quiet new pillar of modern Japanese sake — Reading 320,000 SAKETIME reviews (2014–2026)
 
 ## Recap from the last piece
 
 In my last data piece, *"Is the era of dry sake over?"*, I arrived at this: 67% of SAKETIME's top 10 brands carry the "sweet" tag; only 4% are tagged "dry." In review text, "fruity" is the leading descriptor at 25%. And yet, on Google, "Japanese sake + dry" still outdraws "Japanese sake + sweet" by a factor of 2.5. **My conclusion: 'dry' isn't dead — it's just stepped off the yardstick used to evaluate the top tier.**
+
+> **Up front, the conclusion.** In SAKETIME's review language (≈320,000 reviews, 2014–2026), the **"acidic" vocabulary grew 3.82× over the decade** — second only to "sweet" (4.58×) and faster than "fruity" (3.11×). And acid is not one thing: it splits into **four directions — lactic, citric, malic, and wine-like — each led by different brands**. Search behavior tracks the same way: consumers don't search for "acidity," they search for **"white koji"** and **"kimoto"** (up 2–4×). The shift isn't just "dry → sweet" — it's a shift in **how acidity is designed and described**. That's the other axis of change in modern Japanese sake.
 
 ## A comment that wouldn't leave me alone
 
@@ -22,7 +24,7 @@ The question I'd ended my last piece with — *"if 'dry' stepped off the yardsti
 
 "Sweet" and "fruity" are the natural extensions of my previous conclusion. But anyone who's actually tasted the top brands — Aramasa, Senkin, Hinotori — knows they're not just sweet and fruity. There's another sensation that lifts on the tongue, common across them. It's acidity.
 
-The acid-forward style that Aramasa and Senkin led. For most of sake history, "acid coming forward" was treated as close to a defect — the signature of *hi-ochi* spoilage, where bacterial action produces excess acetic acid. Somewhere along the way, that same rising acid stopped being a flaw and became a feature.
+The acid-forward style that Aramasa and Senkin led. For most of sake history, "acid coming forward" was treated as close to a defect — the signature of **_hi-ochi_** spoilage (a lactic-acid bacterial contamination that clouds sake and produces off-flavors, long regarded by Japanese brewers as the principal cause of spoiled product), where bacterial action produces excess acetic acid. Somewhere along the way, that same rising acid stopped being a flaw and became a feature.
 
 I wanted to see if this story is actually in the data. Using the same 320,000 reviews from my last piece, plus some new data and methods, I went back in. The conclusion, up front: **acidity has quietly emerged over the last decade as the second protagonist of modern Japanese sake — partly inheriting the role 'dry' used to play.** Paul, this is me finally making good on "I'll dig and report back."
 
@@ -32,27 +34,31 @@ I wanted to see if this story is actually in the data. Using the same 320,000 re
 
 My last piece tracked five taste-keyword categories (Sweet, Dry, Rich, Light, Fruity) by decade. This time I added a sixth: **Acidic**.
 
-Defining "acidic vocabulary" isn't trivial. I ended up with **16 words that chemically point to acidity** — 酸味 (*sansa-mi*, "acid taste"), 酸度 (*sando*, "acidity reading"), 乳酸 ("lactic acid"), 甘酸っぱい/甘酸 ("sweet-and-sour"), citrus terms (柑橘・レモン・ライム・グレープフルーツ・柚子・シトラス), ヨーグルト (yogurt), ワイン・葡萄 (wine, grape), 梅干し・プラム (umeboshi, plum), ベリー (berry), キウイ (kiwi), and 白麹 (*shiro-koji*, white koji). Each is a word that, by itself, signals "this is about acidity" — high-precision, low-noise vocabulary only. (Methodology notes at the end.)
+Defining "acidic vocabulary" isn't trivial. I settled on what I'll call my **acidic vocabulary**: **CORE 4 words** (酸味 *sansa-mi* "acid taste", 酸っぱい *suppai* "sour", 酸度 *sando* "acidity reading", 乳酸 "lactic acid") — words that, alone, can only mean acidity — and **RELATED 16 words** that chemically or sensorially evoke acidity (citrus terms — 柑橘, レモン, ライム, グレープフルーツ, 柚子, シトラス; ヨーグルト yogurt; ワイン・葡萄 wine, grape; 梅干し・プラム umeboshi, plum; ベリー berry; キウイ kiwi; 甘酸っぱい/甘酸 "sweet-and-sour"; and 白麹 *shiro-koji* white koji). **20 terms in total**, all chosen so that a single occurrence in a review counts the review as "talking about acidity" with low noise. (Selection methodology at the end.)
+
+Just listing these words reveals something on its own: **modern Japanese sake reviews now casually invoke "lemon," "lime," "grapefruit," "yogurt," "wine"** — vocabulary borrowed wholesale from other beverages and fruits. This is clearly discontinuous with how sake was discussed even ten years ago.
+
+One caveat to flag up front. **What this piece measures is not actual chemical acidity, but the frequency of acidic vocabulary in reviews.** Strictly speaking, the data shows "acidity is talked about more often as a tasting descriptor," not "more high-acidity sake exists." That said, the language shift aligns with rising white-koji / kimoto search interest and brand-by-brand brewing profiles (sections 4–5), so the vocabulary change very likely tracks an underlying shift in how sake is being made.
 
 ![Six taste-keyword categories, 2014 → 2025](med_fig1_six_categories.png)
 *Fig. 1: Mention rates by year across all brands. The Acidic category climbed from 7.2% in 2014 to 27.5% in 2025 — a 3.82× rise.*
 
 The result was unambiguous.
 
-In absolute change, **Sweet led at +23.4 points; Acidic was second at +20.3 points.** By multiplier, Sweet grew 4.58× and Acidic 3.82×. **Acidic grew faster than Fruity, and more than twice as fast as Dry.** This was a dimension I hadn't included in the last piece, and I'd been underestimating its scale.
+As the chart shows, **the red bar for "Acidic" rises to second place, just behind "Sweet."** In absolute change, **Sweet led at +23.4 points; Acidic was second at +20.3 points.** By multiplier, Sweet grew 4.58× and Acidic 3.82×. **Acidic grew faster than Fruity, and more than twice as fast as Dry.** This was a dimension I hadn't included in the last piece, and I'd been underestimating its scale.
 
 Dry, meanwhile, grew the slowest of the six at 1.74×. My last piece's conclusion — *"dry isn't dead"* — holds up in this rerun. But sitting next to the other five, **dry is being visibly left behind.**
 
 ## 2. "Acid" is not one thing — it has four faces
 
-You can't really see the story by staring at total acidic-vocabulary frequency. Japanese sake contains four major organic acids (see [SakeStreet](https://sakestreet.com/en/media/what-is-acidity) and [SAKETIMES](https://www.sake-times.com/think/study/sake_g_sour-taste-of-sake)). Lactic, citric, malic, and tartaric. Each is produced through a different process and tastes different on the palate.
+You can't really see the story by staring at total acidic-vocabulary frequency. The **principal organic acids in Japanese sake are lactic, malic, succinic, citric, and acetic** — five (see [SAKETIMES](https://jp.sake-times.com/think/study/sake_g_sour-taste-of-sake) or [SakeStreet](https://sakestreet.com/en/media/what-is-acidity) for the chemistry), each produced through a different process and tasting different on the palate. **For this analysis I went a step further and grouped the acidic vocabulary into four buckets based on the kind of acid each term evokes**:
 
-- **Lactic acid** — round, creamy, yogurt-like. Develops naturally in *kimoto* and *yamahai* fermentation, traditional starter-mash methods that rely on wild lactic-acid bacteria.
-- **Citric acid** — sharp, bright, citrus-like. A signature of breweries adopting *shiro-koji* (white koji, *Aspergillus luchuensis*) or *kuro-koji* (black koji), molds originally used in awamori and shochu production.
-- **Malic acid** — clean, juicy, apple-like. Yeast-driven (Yeast No. 28 is the most famous example).
-- **Tartaric acid** — wine-like, often paired with grape and wine descriptors.
+- **Lactic-type** — round, creamy, yogurt-like. Develops naturally in *kimoto* and *yamahai* fermentation, traditional starter-mash methods that rely on wild lactic-acid bacteria.
+- **Citric-type** — sharp, bright, citrus-like. A signature of breweries adopting *shiro-koji* (white koji, *Aspergillus luchuensis*) or *kuro-koji* (black koji), molds originally used in awamori and shochu production.
+- **Malic-type** — clean, juicy, apple-like. Yeast-driven (Yeast No. 28 is the most famous example).
+- **Tartaric-type ("wine-like acid")** — wine and grape descriptors. **Tartaric acid is not actually a principal organic acid in sake**; I'm using it as a convenient bucket label for the *wine-like* end of the acidic vocabulary, since the descriptors in this group (ワイン, 葡萄) point to tartaric/grape-acid sensations rather than to anything sake itself produces.
 
-I split my 16 acidic-vocabulary words into these four buckets and tracked each year by year.
+I split my 20 acidic-vocabulary words into these four buckets and tracked each year by year.
 
 ![Four acid types, growth 2014 → 2026](med_fig2_acid_types.png)
 *Fig. 2: Growth multipliers by acid type. Lactic-acid vocabulary rose from 0.12% in 2014 to 2.50% in 2026 — a 21× expansion that mirrors the kimoto/yamahai revival.*
@@ -65,15 +71,11 @@ Tartaric vocabulary (grape, wine) was already at 1.49% in 2014 — the highest s
 
 ## 3. The machine also surfaced an "acidity topic" — without being asked
 
-So far this has been hypothesis-driven analysis — *I* decided which words count as "acidic." I also wanted to check the other direction: can a model find acidity as a topic on its own, with no input from me?
+Hypothesis-driven keyword counting is hard to defend on its own: "the words I picked happened to grow" is always a possible critique. So I also let a machine check independently. Training **LDA and DMR** topic models (statistical methods that extract latent themes from a document collection, akin to R's `stm`) at K=20 on 247,485 preprocessed reviews, **8 of 20 LDA topics — and 9 of 20 DMR topics — contained at least one acid-related word (酸味, 酸, 酸度, キレ, シャープ, 爽やか, さっぱり, ジューシー, 乳酸) in their top 20 words**. LDA's Topic 2, for instance, clustered "carbonation · wine · gas · sparkling · refreshing · sparkling · sweet-and-sour · lactic · *shuwa*" — a clearly defined **"acid-forward sparkling style"** topic.
 
-Topic models are statistical tools that find latent themes in document collections. You don't tell them what to look for; you ask "what are these documents about?" and let the math answer. I trained two models — **LDA** and **DMR** (a variant where year is included as a covariate, analogous to Structural Topic Models in R) — with K=20 topics on 247,485 preprocessed reviews.
+In other words: without prompting from me about acidity, the model surfaces it as one of its principal themes. **Acidity functions as an independent dimension of evaluation, observable from outside my chosen vocabulary.** (Model details in "Data and methods.")
 
-The result: **in LDA, 8 of 20 topics included at least one acid-related word (酸味, 酸, 酸度, キレ, シャープ, 爽やか, さっぱり, ジューシー, 乳酸) in their top 20 words. In DMR, the count was 9 of 20.** LDA's Topic 2, for instance, clustered "carbonation · wine · gas · sparkling · refreshing · sparkling · sweet-and-sour · lactic · *shuwa*" — a clearly defined "acid-forward sparkling style" topic.
-
-In other words: with no one prompting it about acidity, an unsupervised model looking at the corpus carves out acidity as one of its major themes. **The vocabulary I chose isn't an artifact of my hypothesis — acidity functions as an independent dimension of evaluation, observable from outside my definition.**
-
-## 4. Four brands that mapped the territory of acid
+## 4. The acid map, brand by brand — Aramasa, Senkin, Tsuchida, Fukucho, and more
 
 Aramasa, Senkin, Tsuchida, Fukucho. I wanted to see whether each of these brands leans on a different one of the four acids, by computing the per-brand mention rate of my acidic vocabulary, split by acid type.
 
@@ -101,25 +103,21 @@ Two things stand out.
 
 **First: consumers don't search for "acidity" — they search for the methods that produce it.** Review writers (enthusiasts) write "acidity"; people who go on to buy a bottle search "white koji" and "kimoto." This gap probably reflects a literacy difference between the people *writing about* sake and the people *buying* it — the latter remember the technique name on the label, not the chemistry abstraction.
 
-**Second: Google Trends and review language are tightly correlated.** Computing Pearson correlations on yearly data: **white koji × citric vocabulary: r = 0.877. Kimoto × lactic vocabulary: r = 0.707.** Both very high. The chemistry (white koji produces large amounts of citric acid), the brewing technique (more breweries adopting white koji), the search behavior (rising "white koji" searches), and the review language (rising citric vocabulary) all move together.
+**Second: Google Trends and review language are tightly correlated.** Computing Pearson correlations on yearly data: **white koji × citric vocabulary: r = 0.877. Kimoto × lactic vocabulary: r = 0.707.** Both very high. **One caveat: year-over-year time series that both trend upward will tend to produce strong correlations by construction, so these numbers are best read as evidence of directional alignment rather than causation.** That said, the chemistry (white koji produces large amounts of citric acid), the brewing technique (more breweries adopting white koji), the search behavior (rising "white koji" searches), and the review language (rising citric vocabulary) all move together in the same direction — which itself is meaningful.
 
 The "three worlds" I described in the last piece — top-of-ranking brands, lower-ranked brands, and general consumer search — pointed in *different* directions on the question of "dry." On the question of acidity, **all three point the same way.**
 
 ## 6. Rewriting the "three worlds"
 
-The last piece ended with this table:
+The last piece's conclusion (three layers of "dry") and this piece's findings (three layers of "acidity") line up directly when placed side by side:
 
-- **World 1 (top-ranked brands)**: 67% sweet, 4% dry — sweet, fruity, light
-- **World 2 (lower-ranked brands)**: 28% sweet, 29% dry — split, "dry" still alive
-- **World 3 (general consumer search)**: "sake dry" 2.5× "sake sweet"
+| World | Dry (previous piece) | Acidity (this piece) |
+|---|---|---|
+| **World 1: Top-ranked brands** | 67% sweet / 4% dry — dry has been discarded at the top | CORE acidic vocabulary 20.8%; CORE ∪ RELATED > 30% — unambiguously discussed in acidic terms |
+| **World 2: Lower-ranked brands** | 28% sweet / 29% dry — split, "dry" still alive | Not very different from the global average — acidity rises across all layers |
+| **World 3: General consumer search** | "sake dry" 2.5× "sake sweet" — survives in search | "Acidity" isn't searched, but "white koji" and "kimoto" are 2–4× higher — diffused via method names |
 
-After this round of analysis, here's the parallel "three worlds of acidity":
-
-- **World 1 (top-10 ranked)**: CORE acidic vocabulary at 20.8%; CORE ∪ RELATED exceeds 30%. Top brands are unambiguously talked about in acidic terms.
-- **World 2 (lower-ranked)**: not very different from the global average. Acidic vocabulary is rising across the whole distribution, not just at the top.
-- **World 3 (general consumer search)**: "acidity" itself isn't searched, but "white koji" and "kimoto" are 2–4× higher than 2014. Interest reaches the general audience, translated into method names.
-
-"Dry" was the axis that *was kept by the lower half and the searches, but discarded at the top.* **Acidity is the opposite — it's rising at every layer.** That's a phenomenon that wasn't observable ten years ago.
+"Dry" was the axis that *was kept by the lower half and the searches, but discarded at the top* — an axis that diverges by layer. **Acidity is the opposite: it rises uniformly across all three layers.** That's a phenomenon that wasn't observable ten years ago.
 
 ## Conclusion: the center didn't just move — it fragmented
 
