@@ -329,7 +329,7 @@ def fig5_three_worlds() -> None:
         ("World 2\nLower-ranked\nbrands",
          '28% sweet / 29% dry\n— Split, "dry" survives',
          "Close to the global average\n— Rises across all layers"),
-        ("World 3\nGeneral consumer\nsearch",
+        ("World 3\nConsumer\nsearch",
          '"sake dry" 2.5× "sake sweet"\n— Survives in search',
          '"Acidity" not searched;\n"white koji" / "kimoto" 2–4×\n— Diffused via method names'),
     ]
