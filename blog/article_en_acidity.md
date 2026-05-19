@@ -109,13 +109,10 @@ The "three worlds" I described in the last piece — top-of-ranking brands, lowe
 
 ## 6. Rewriting the "three worlds"
 
-The last piece's conclusion (three layers of "dry") and this piece's findings (three layers of "acidity") line up directly when placed side by side:
+The last piece's conclusion (three layers of "dry") and this piece's findings (three layers of "acidity") line up directly when placed side by side.
 
-| World | Dry (previous piece) | Acidity (this piece) |
-|---|---|---|
-| **World 1: Top-ranked brands** | 67% sweet / 4% dry — dry has been discarded at the top | CORE acidic vocabulary 20.8%; CORE ∪ RELATED > 30% — unambiguously discussed in acidic terms |
-| **World 2: Lower-ranked brands** | 28% sweet / 29% dry — split, "dry" still alive | Not very different from the global average — acidity rises across all layers |
-| **World 3: General consumer search** | "sake dry" 2.5× "sake sweet" — survives in search | "Acidity" isn't searched, but "white koji" and "kimoto" are 2–4× higher — diffused via method names |
+![Three Worlds, compared: Dry vs Acidity](med_fig5_three_worlds.png)
+*Fig. 5: Three Worlds, compared. Dry was discarded at the top, kept in the lower half, and survived in search — it diverged by layer. Acidity rises across all three layers uniformly.*
 
 "Dry" was the axis that *was kept by the lower half and the searches, but discarded at the top* — an axis that diverges by layer. **Acidity is the opposite: it rises uniformly across all three layers.** That's a phenomenon that wasn't observable ten years ago.
 

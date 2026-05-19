@@ -12,6 +12,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import matplotlib
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -145,7 +146,7 @@ def fig2_acid_types() -> None:
 
 
 # =========================================================================
-# Fig 3: Brewery × acid-type heatmap
+# Fig 3: Brand × acid-type heatmap
 # =========================================================================
 def fig3_brand_profile() -> None:
     brands = [
@@ -265,9 +266,111 @@ def fig4_google_trends() -> None:
     print("saved: med_fig4_google_trends.png")
 
 
+# =========================================================================
+# Fig 5: Three Worlds comparison (Dry vs Acidity)
+# Medium で <table> がうまく取り込めなかった対策。横長スタイルで他の
+# Medium 図 (fig1-4) と一貫させつつ、視認性を上げるために大きめフォント。
+# =========================================================================
+def fig5_three_worlds() -> None:
+    fig, ax = plt.subplots(figsize=(11, 6.5))
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.axis("off")
+    fig.patch.set_facecolor("white")
+
+    # IG/note と同じパレット
+    ACCENT_DRY = "#1976D2"
+    ACCENT_ACID = "#D32F2F"
+    BG_DRY = "#E3F2FD"
+    BG_ACID = "#FFEBEE"
+    ROW_LABEL = "#F5F5F5"
+    BORDER = "#BBBBBB"
+    INK = "#212121"
+    SUB = "#555555"
+
+    # Columns (axes coords)
+    x_world = 0.025
+    w_world = 0.17
+    x_dry = x_world + w_world
+    w_dry = 0.395
+    x_acid = x_dry + w_dry
+    w_acid = 0.385
+
+    # Title block
+    fig.text(0.5, 0.95, "Three Worlds, compared",
+             ha="center", va="center", fontsize=24, fontweight="bold", color=INK)
+    fig.text(0.5, 0.90, "Dry (previous piece)   vs   Acidity (this piece)",
+             ha="center", va="center", fontsize=15, color=SUB)
+    fig.text(0.5, 0.855,
+             "Dry diverged by layer; acidity rises uniformly across all three layers.",
+             ha="center", va="center", fontsize=12, color=SUB, fontstyle="italic")
+
+    # Header row (axis labels for the two columns)
+    header_y = 0.755
+    header_h = 0.06
+    ax.add_patch(mpatches.Rectangle(
+        (x_dry, header_y), w_dry, header_h,
+        facecolor=BG_DRY, edgecolor=BORDER, linewidth=1.2))
+    ax.text(x_dry + w_dry / 2, header_y + header_h / 2,
+            "Dry (previous piece)", ha="center", va="center",
+            fontsize=17, fontweight="bold", color=ACCENT_DRY)
+    ax.add_patch(mpatches.Rectangle(
+        (x_acid, header_y), w_acid, header_h,
+        facecolor=BG_ACID, edgecolor=BORDER, linewidth=1.2))
+    ax.text(x_acid + w_acid / 2, header_y + header_h / 2,
+            "Acidity (this piece)", ha="center", va="center",
+            fontsize=17, fontweight="bold", color=ACCENT_ACID)
+
+    # Data rows
+    rows = [
+        ("World 1\nTop-ranked\nbrands",
+         "67% sweet / 4% dry\n— Discarded at the top",
+         "CORE vocabulary 20.8%\nCORE ∪ RELATED > 30%\n— Unambiguously discussed"),
+        ("World 2\nLower-ranked\nbrands",
+         '28% sweet / 29% dry\n— Split, "dry" survives',
+         "Close to the global average\n— Rises across all layers"),
+        ("World 3\nGeneral consumer\nsearch",
+         '"sake dry" 2.5× "sake sweet"\n— Survives in search',
+         '"Acidity" not searched;\n"white koji" / "kimoto" 2–4×\n— Diffused via method names'),
+    ]
+
+    row_h = 0.225
+    row_bottoms = [header_y - row_h * (i + 1) for i in range(len(rows))]
+
+    for row_bottom, (world_label, dry_cell, acid_cell) in zip(row_bottoms, rows):
+        row_center = row_bottom + row_h / 2
+
+        # World label
+        ax.add_patch(mpatches.Rectangle(
+            (x_world, row_bottom), w_world, row_h,
+            facecolor=ROW_LABEL, edgecolor=BORDER, linewidth=1.2))
+        ax.text(x_world + w_world / 2, row_center, world_label,
+                ha="center", va="center",
+                fontsize=13, fontweight="bold", color=INK)
+
+        # Dry cell
+        ax.add_patch(mpatches.Rectangle(
+            (x_dry, row_bottom), w_dry, row_h,
+            facecolor="white", edgecolor=BORDER, linewidth=1.2))
+        ax.text(x_dry + 0.012, row_center, dry_cell,
+                ha="left", va="center", fontsize=13, color=INK)
+
+        # Acidity cell
+        ax.add_patch(mpatches.Rectangle(
+            (x_acid, row_bottom), w_acid, row_h,
+            facecolor="white", edgecolor=BORDER, linewidth=1.2))
+        ax.text(x_acid + 0.012, row_center, acid_cell,
+                ha="left", va="center", fontsize=13, color=INK)
+
+    plt.savefig(OUT / "med_fig5_three_worlds.png", **SAVE_KW)
+    plt.close(fig)
+    print("saved: med_fig5_three_worlds.png")
+
+
 if __name__ == "__main__":
     fig1_six_categories()
     fig2_acid_types()
     fig3_brand_profile()
     fig4_google_trends()
+    fig5_three_worlds()
     print("\nDone.")
